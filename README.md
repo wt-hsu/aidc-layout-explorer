@@ -2,7 +2,7 @@
 
 An isometric, layer-by-layer explorer of an illustrative 80 MW AI data center: how power, cooling, water and network run from the point of interconnection to the rack.
 
-- Live: https://aidc.wantinghsu.com/ (also https://wt-hsu.github.io/aidc-layout-explorer/)
+- Live: https://aidc-explorer.wantinghsu.com/ (also https://wt-hsu.github.io/aidc-layout-explorer/)
 - Study page: https://wantinghsu.com/lab/aidc-layout/
 
 ## What's in it
