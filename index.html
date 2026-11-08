@@ -1,0 +1,1479 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AIDC Layout Explorer</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="An isometric, layer-by-layer explorer of an AI data center campus: yard, grey space, white space and the rack, with power, cooling, water, network, fire and structural layers.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<style>
+/* Layout: product-drawing aesthetic — near-white hardware outlined in ink on a pale grey stage with a diamond grid; serif headline, mono annotations; colour only for system flows, status LEDs and the one selected part */
+:root{
+  /* palette: wantinghsu.com "Paper" theme; system lines kept by meaning, saturation lowered to sit on paper */
+  --paper:#f3f4f6; --stage:#ffffff; --card:#ffffff; --ink:#0e1116; --ink-2:#4b5661; --ink-3:#4f5b67; --line:#0e111624; --line-2:#0e111647; --panel:#e6e9ee;
+  --btn:#0e6f86; --btn-h:#0b5a6d;
+  --power:#3a5f9e; --heat:#c2603f; --cold:#4f8fb4; --water:#2f8a84; --net:#7464a8; --fire:#b55050; --struct:#9a7a3e; --gen:#a8863f; --batt:#5f8a4e; --led:#7cc242; --accent:#9c4a0d; --line-art:#3d8fd6;
+  --f-display:"Geist","Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --f-body:"Geist","Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --f-mono:"Geist Mono","Noto Sans TC",ui-monospace,Menlo,monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+a{color:var(--ink);text-underline-offset:2px}
+.app{height:100%;display:grid;grid-template-rows:auto 1fr auto}
+/* header */
+header.bar{display:flex;align-items:flex-end;gap:14px 24px;flex-wrap:wrap;padding-block:16px 14px}
+.brand{display:grid;gap:6px;margin-right:auto;min-width:0;max-width:860px}
+.pill{justify-self:start;font-size:12px;border:1px solid var(--line-2);border-radius:999px;padding:2px 11px;color:var(--ink)}
+.brand h1{margin:0;font-family:var(--f-display);font-weight:600;font-size:clamp(24px,2.4vw,32px);line-height:1.15;letter-spacing:-.015em;text-wrap:balance}
+.brand .sub{margin:0;font-size:14.5px;color:var(--ink-2);max-width:64ch}
+.sheet .case{border-left:2px solid var(--line-2);padding:2px 0 2px 12px}.sheet .case b{font-size:13px}.sheet .case p{margin:4px 0 0;font-size:13px;color:var(--ink-2)}
+.brand .by{margin:6px 0 0;font-size:12.5px;color:var(--ink-3);display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
+.brand .by .lk{color:var(--ink-3)}
+.brand .by a{color:var(--ink);text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
+.hctl{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.seg{display:inline-flex;border:1px solid var(--line-2);border-radius:6px;overflow:hidden;background:var(--paper)}
+.seg button{border:0;background:transparent;padding:6px 12px;font-size:13px;color:var(--ink-2)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.cta{display:inline-flex;align-items:center;gap:10px;border:0;background:var(--ink);color:#fff;border-radius:4px;padding:9px 14px;font-size:13.5px;font-weight:500}
+.cta span[aria-hidden]{font-size:15px}
+/* work area */
+main.work{display:grid;grid-template-columns:236px minmax(0,1fr) 330px;gap:18px;min-height:0;padding-block:4px 12px}
+.panel{min-height:0;overflow:auto;display:grid;gap:26px;align-content:start;scrollbar-width:thin}
+.ph{font:600 12px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink);margin-bottom:12px;display:flex;align-items:baseline;gap:8px}
+.ph .n{color:var(--ink-3);font-weight:500}
+.ph .q{margin-left:auto;font:400 11px var(--f-body);letter-spacing:0;text-transform:none;color:var(--ink-3)}
+.psec{padding-top:16px;border-top:1px solid var(--ink)}
+.psec:first-child{padding-top:0;border-top:0}
+.levels{display:grid;gap:2px}
+.lv{display:grid;grid-template-columns:28px 1fr;gap:8px;align-items:center;text-align:left;border:0;background:transparent;border-radius:6px;padding:6px 6px}
+.lv .code{font:500 11.5px var(--f-mono);color:var(--ink-3)}
+.lv b{font-weight:500;font-size:13.5px;display:block;line-height:1.3}
+.lv small{display:block;font-size:11.5px;color:var(--ink-3);line-height:1.3}
+.lv:hover{background:var(--panel)}
+.lv[aria-pressed="true"]{background:var(--panel)}
+.lv[aria-pressed="true"] .code{color:var(--accent)}
+.lv[aria-pressed="true"] b::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);margin-right:7px;vertical-align:2px}
+.rooms{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 4px 36px}
+.rooms button{border:1px solid var(--line-2);background:var(--paper);border-radius:999px;padding:2px 10px;font-size:12px;color:var(--ink-2)}
+.rooms button[aria-pressed="true"]{border-color:var(--ink);color:var(--ink);font-weight:500}
+.layers{display:grid;gap:0}
+.ly{display:flex;align-items:center;gap:9px;padding:5px 6px;border-radius:6px;font-size:13.5px;cursor:pointer;user-select:none}
+.ly:hover{background:var(--panel)}
+.ly input{accent-color:var(--ink);margin:0}
+.lyw{display:grid;gap:1px}
+.keys{display:flex;flex-wrap:wrap;gap:2px 10px;margin:0 0 4px 30px;font-size:11.5px;color:var(--ink-2)}
+.keys span{display:inline-flex;align-items:center;gap:5px}
+.keys.off{opacity:.4}
+.ly .en2{margin-left:auto;font:400 11px var(--f-mono);color:var(--ink-3)}
+.scn{display:grid;gap:12px}
+.sc{display:grid;gap:5px}
+.sc .t{font-size:12.5px;color:var(--ink-2);display:flex;justify-content:space-between;gap:6px;align-items:baseline}
+.sc .t button{border:0;background:none;padding:0;color:var(--ink-3);font-size:11.5px;text-decoration:underline;text-underline-offset:2px}
+.sc .seg{width:100%}.sc .seg button{flex:1}
+.outbtn{display:flex;align-items:center;justify-content:space-between;border:1px solid var(--ink);color:var(--ink);background:var(--paper);border-radius:4px;padding:8px 12px;font-weight:500;font-size:13px;text-align:left}
+.outbtn[aria-pressed="true"]{background:var(--ink);color:#fff}
+.linkbtn{border:0;background:none;padding:0;font-size:12.5px;color:var(--ink);text-decoration:underline;text-underline-offset:3px;justify-self:start}
+/* stage */
+.stage{position:relative;min-height:0;border-radius:6px;overflow:hidden;background:var(--stage);touch-action:none}
+#gl{position:absolute;inset:0;width:100%;height:100%;display:block}
+#paths{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+#paths polyline{fill:none;stroke-linejoin:round;stroke-linecap:round}
+#paths .flow{stroke-width:2;stroke-dasharray:6 6;animation:dash 1.1s linear infinite}
+#paths .base{stroke-width:5;stroke-opacity:.12}
+#paths .lost{stroke:#b5b5b0!important;animation:none;stroke-dasharray:2 5;stroke-opacity:.9}
+#paths .idle{stroke-dasharray:2 6;animation:none;stroke-opacity:.6}
+#paths .slow{animation-duration:3.2s;stroke-opacity:.45}
+#paths .fire{stroke-dasharray:2 4;animation:none;stroke-width:1.6}
+#paths .leader{stroke:#8f8f8a;stroke-width:1;fill:none}
+#paths .ldot{fill:#8f8f8a}
+#paths .ring{fill:none;stroke:var(--accent);stroke-width:1.2;stroke-dasharray:2 4}
+#paths .core{fill:var(--accent)}
+@keyframes dash{to{stroke-dashoffset:-24}}
+@keyframes spin{to{stroke-dashoffset:-60}}
+#paths .ring{animation:spin 6s linear infinite}
+@media (prefers-reduced-motion:reduce){#paths .flow,#paths .ring{animation:none}}
+#labels{position:absolute;inset:0;pointer-events:none}
+.lb{position:absolute;transform:translate(-50%,-100%);pointer-events:auto;cursor:pointer;display:grid;justify-items:center;white-space:nowrap}
+.lb span{display:block;font-size:12px;font-weight:500;color:var(--ink);line-height:1.25;text-align:left;background:#fff;border:1px solid #8f8f8a;border-radius:4px;padding:2px 6px 3px}
+.lb span small{display:block;font:400 10px var(--f-mono);color:var(--ink-2)}
+.lb span .sd{display:none}
+.lb i{width:1px;height:var(--lead,12px);background:#8f8f8a}
+.lb.zone span{border-color:var(--ink);border-radius:999px;padding:2px 10px 3px}
+.lb.sel span{border-color:var(--accent);color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.lb.sel i{background:var(--accent)}
+.lb.hot span{border-color:var(--fire);color:var(--fire)}
+.lb.hov span{border-color:var(--ink)}
+.lb.side{transform:none;display:block;white-space:normal}
+.lb.side i{display:none}
+.lb.side span{padding:8px 10px;font-size:13px}
+.lb.side span small{display:inline;margin-left:6px}
+.lb.side span .sd{display:block;font-size:12px;color:var(--ink-2);font-weight:400;line-height:1.5;margin-top:3px;font-style:normal}
+.crumb{position:absolute;left:14px;top:12px;display:flex;flex-wrap:wrap;gap:2px 6px;align-items:center;font:400 12px var(--f-mono);max-width:calc(100% - 28px)}
+.crumb button{border:0;background:none;padding:0;color:var(--ink-2)}
+.crumb button:hover{color:var(--ink);text-decoration:underline}
+.crumb button:last-child{color:var(--ink)}
+.crumb .sep{color:var(--ink-3)}
+.ctrls{position:absolute;right:12px;bottom:12px;display:grid;gap:6px;justify-items:end}
+.ctrls button{width:34px;height:34px;border-radius:4px;border:1px solid var(--line-2);background:#fff;font-size:15px;line-height:1;color:var(--ink)}
+.ctrls .explode{width:auto;padding:0 10px;font-size:12px}
+.dash{position:absolute;left:12px;bottom:12px;background:rgba(255,255,255,.96);border:1px solid var(--line);border-radius:6px;padding:12px 14px;display:grid;gap:5px;min-width:230px;font-size:12px}
+.dash .row{display:flex;justify-content:space-between;gap:12px;align-items:baseline}
+.dash .row span{color:var(--ink-2)}
+.dash .row b{font:500 12.5px var(--f-mono);font-variant-numeric:tabular-nums;text-align:right}
+.dash .big b{font:500 19px var(--f-mono);letter-spacing:-.01em}
+.dash input[type=range]{width:100%;accent-color:var(--ink)}
+.dash .note{font-size:10.5px;color:var(--ink-3);line-height:1.45;max-width:250px}
+.dash .hdr{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.dash .hdr b{font:500 11px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2)}
+.dash .hdr button{border:0;background:none;color:var(--ink-3);font-size:11.5px;padding:0;text-decoration:underline}
+.toast{position:absolute;right:14px;top:14px;width:min(400px,calc(100% - 28px));background:#fff;border:1px solid var(--line);border-radius:8px;padding:16px 16px 14px;display:grid;gap:8px;box-shadow:0 8px 28px rgba(22,22,22,.08);z-index:4}
+.toast .th{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.toast .th b{font:600 17px/1.3 var(--f-display)}
+.toast .th span{font:400 11.5px var(--f-mono);color:var(--ink-3)}
+.toast .kick{font:500 11px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.toast p{margin:0;font-size:13.5px;color:var(--ink-2)}
+.toast .acts{display:flex;gap:8px;justify-content:flex-end;align-items:center;flex-wrap:wrap}
+.toast .src{font-size:11px;color:var(--ink-3)}
+.toast .sub2{border-top:1px solid var(--line);padding-top:8px;display:grid;gap:6px}
+.toast .kr{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.toast .mini{display:flex;gap:6px}
+.rbtn.sm{width:30px;height:30px;font-size:14px}
+.xbtn{width:28px;height:28px;border-radius:50%;border:1px solid var(--line-2);background:#fff;color:var(--ink);font-size:16px;line-height:1;display:inline-grid;place-items:center;flex:none;margin:-4px -4px 0 0}
+.xbtn:hover{border-color:var(--ink)}
+.rbtn{width:40px;height:40px;border-radius:50%;background:var(--ink);color:#fff;border:0;font-size:17px;display:inline-grid;place-items:center;flex:none}
+.rbtn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line-2)}
+.tbtn{border:0;background:none;color:var(--ink-2);font-size:12.5px;text-decoration:underline;text-underline-offset:3px;padding:0 4px}
+.hint{position:absolute;right:58px;bottom:14px;font:400 11px var(--f-mono);color:var(--ink-3)}
+/* architecture sheet */
+.cards{position:absolute;right:14px;top:14px;width:min(400px,calc(100% - 28px));display:grid;gap:10px;z-index:4;pointer-events:none}
+.cards .toast{position:static;width:auto;pointer-events:auto}
+.cards.over{z-index:7;top:auto;bottom:24px;right:28px}
+.sheet{position:absolute;inset:10px;background:#fff;border:1px solid var(--line);border-radius:8px;overflow:auto;padding:20px 22px 22px;display:block;z-index:6}
+.sheet>*+*{margin-top:16px}
+.sheet .sh-top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
+.sheet h2{margin:8px 0 4px;font:600 clamp(20px,2.1vw,26px)/1.2 var(--f-display);letter-spacing:-.01em;text-wrap:balance}
+.sheet .lede{margin:0;color:var(--ink-2);font-size:14px;max-width:70ch}
+.sheet .dia{overflow-x:auto}
+.sheet .dia svg{display:block;width:100%;min-width:640px;height:auto}
+.gens3{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px}
+.gens3 div{display:grid;gap:4px;align-content:start}
+.gens3 b{font-size:14px}
+.gens3 .k{font:500 11px var(--f-mono);color:var(--line-art);letter-spacing:.06em;text-transform:uppercase}
+.gens3 p{margin:0;font-size:13px;color:var(--ink-2);line-height:1.6}
+.legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px 20px;border-top:1px solid var(--line);padding-top:12px}
+.legend div{font-size:12.5px;color:var(--ink-2);line-height:1.5}
+.legend b{color:var(--ink);font-weight:500}
+.sheet .srcs{border-top:1px solid var(--line);padding-top:10px}
+/* info card */
+.card{display:grid;gap:14px}
+.card .nm{display:grid;gap:4px}
+.card .nm h2{margin:0;font:600 21px/1.25 var(--f-display);letter-spacing:-.01em;text-wrap:balance}
+.card .nm .alt{font:400 12px var(--f-mono);color:var(--ink-3)}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-size:11.5px;border-radius:999px;padding:2px 10px;border:1px solid var(--line-2);color:var(--ink-2);display:inline-flex;align-items:center;gap:6px}
+.tag i{width:12px;height:0;border-top:2px dashed}
+.card p{margin:0;font-size:13.5px;line-height:1.7}
+.card .sh{font:500 11px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{border:1px solid var(--line-2);background:var(--paper);border-radius:4px;padding:3px 9px;font-size:12.5px}
+.chips button::after{content:" →";color:var(--ink-3)}
+.chips button:hover{border-color:var(--ink)}
+.chips .none{font-size:12px;color:var(--ink-3)}
+.pmq{margin:0;padding-left:18px;display:grid;gap:4px;font-size:13.5px}
+.pmbox{background:var(--panel);border-radius:6px;padding:12px 14px}
+.srcs{margin:0;padding-left:16px;font-size:12px;display:grid;gap:4px}
+.srcs a{color:var(--ink-2)}
+.empty{display:grid;gap:12px;color:var(--ink-2);font-size:13.5px}
+.empty h2{margin:0;font:600 19px/1.3 var(--f-display);color:var(--ink)}
+.empty ol{margin:0;padding-left:18px;display:grid;gap:7px}
+.foot{font:400 11.5px var(--f-mono);color:var(--ink-3);padding-block:10px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:4px 14px;justify-content:space-between}
+@media (max-width:1180px){main.work{grid-template-columns:220px minmax(0,1fr) 290px}}
+@media (max-width:960px){
+  html,body{height:auto}
+  .app{height:auto;display:block}
+  main.work{display:flex;flex-direction:column}
+  .stage{height:64vh;min-height:400px;order:1}
+  #ctl{order:2} #info{order:3}
+  .panel{overflow:visible}
+  .dash{min-width:0;max-width:calc(100% - 64px)}
+  .dash .note{display:none}
+  .cards{left:10px;right:10px;width:auto;top:auto;bottom:10px}
+}
+@media (max-width:520px){.hint{display:none}}
+/* Paper theme: interactive fills take the site's interface blue; floating cards stay white on the grey page */
+.seg button[aria-pressed="true"],.cta,.rbtn:not(.ghost){background:var(--btn);color:#fff}
+.cta:hover,.rbtn:not(.ghost):hover{background:var(--btn-h)}
+.outbtn[aria-pressed="true"]{background:var(--btn);border-color:var(--btn);color:#fff}
+.toast,.dash,.lb>span,.sheet,.outbtn:not([aria-pressed="true"]),.seg{background:var(--card)}
+.brand h1 .tl{font-weight:400;color:var(--ink-2);margin-left:.45em}
+</style>
+</head>
+<body>
+
+
+<div class="app">
+  <header class="bar">
+    <div class="brand"><h1><span data-i="title"></span><span class="tl" data-i="tagline"></span></h1><p class="sub" data-i="subtitle"></p><p class="by"><a href="https://wantinghsu.com/lab/aidc-layout/">← Back to the study · wantinghsu.com</a></p></div>
+    <div class="hctl">
+      <div class="seg" role="group" aria-label="Language" id="langSeg"><button data-v="zh" aria-pressed="true">中文</button><button data-v="en" aria-pressed="false">EN</button></div>
+      <button class="cta" id="tourBtn"><span data-i="tour"></span><span aria-hidden="true">→</span></button>
+    </div>
+  </header>
+
+  <main class="work">
+    <aside class="panel" id="ctl" aria-label="Controls">
+      <section class="psec"><div class="ph"><span class="n">01</span><span data-i="hLevels"></span><span class="q" data-i="qLevels"></span></div><div class="levels" id="levels"></div></section>
+      <section class="psec"><div class="ph"><span class="n">02</span><span data-i="hLayers"></span><span class="q" data-i="qLayers"></span></div><div class="layers" id="layers"></div></section>
+      <section class="psec"><div class="ph"><span class="n">03</span><span data-i="hScen"></span><span class="q" data-i="qScen"></span></div><div class="scn" id="scen"></div></section>
+    </aside>
+
+    <section class="stage" id="stage" aria-label="Isometric model">
+      <canvas id="gl"></canvas>
+      <svg id="paths" aria-hidden="true"></svg>
+      <div id="labels"></div>
+      <nav class="crumb" id="crumb" aria-label="Breadcrumb"></nav>
+      <div class="dash" id="dash"></div>
+      <div class="ctrls">
+        <button id="zIn" aria-label="Zoom in">+</button>
+        <button id="zOut" aria-label="Zoom out">−</button>
+        <button id="rotL" aria-label="Rotate left">↺</button>
+        <button id="rotR" aria-label="Rotate right">↻</button>
+        <button id="reset" aria-label="Reset view">⌂</button>
+      </div>
+      <div class="hint" id="hint"></div>
+      <div class="cards" id="cards"><div class="toast" id="toast" hidden></div><div class="toast ocard" id="ocard" hidden></div></div>
+      <div class="sheet" id="arch" hidden></div>
+    </section>
+
+    <aside class="panel" id="info" aria-label="Component sheet"></aside>
+  </main>
+  <footer class="foot"><span data-i="disclaimer"></span><span data-i="credit"></span></footer>
+</div>
+
+<script src="vendor/three.min.js"></script>
+<script>
+/* ============================================================
+   DATA — sources, UI strings, component catalogue, relations
+   Every factual statement in a component card cites SRC keys.
+   Layout geometry is illustrative (not any real site).
+   ============================================================ */
+const SRC={
+  uptime25:{t:"Uptime Institute — Global Data Center Survey 2025",u:"https://datacenter.uptimeinstitute.com/rs/711-RIA-145/images/2025.Annual.Survey.Report.pdf?version=0"},
+  tier:{t:"Uptime Institute Journal — Tier Classification System",u:"https://journal.uptimeinstitute.com/?p=3737"},
+  nv800:{t:"NVIDIA Technical Blog — 800 VDC Architecture",u:"https://developer.nvidia.com/blog/nvidia-800-v-hvdc-architecture-will-power-the-next-generation-of-ai-factories/"},
+  gb300:{t:"NVIDIA — GB300 NVL72",u:"https://www.nvidia.com/en-us/data-center/gb300-nvl72/"},
+  se132:{t:"DCD — Schneider Electric × NVIDIA GB200 NVL72 reference design",u:"https://datacenterdynamics.com/en/news/schneider-electric-co-develops-gb200-nvl72-reference-architecture-with-nvidia"},
+  sevxl:{t:"pv magazine — Schneider Electric Galaxy VXL UPS release",u:"https://www.pv-magazine-australia.com/press-releases/schneider-electric-announces-new-solutions-to-address-the-energy-and-sustainability-challenges-spurred-by-ai"},
+  vertiv:{t:"Vertiv — Understanding coolant distribution units (CDUs)",u:"https://www.vertiv.com/en-us/insights/articles/educational-articles/understanding-coolant-distribution-units-cdus-for-liquid-cooling/"},
+  mswater:{t:"Microsoft — Next-generation datacenters consume zero water for cooling",u:"https://microsoft.com/en-us/microsoft-cloud/blog/2024/12/09/sustainable-by-design-next-generation-datacenters-consume-zero-water-for-cooling"},
+  mslearn:{t:"Microsoft Learn — Key zones on the datacenter floor plan",u:"https://learn.microsoft.com/en-us/training/modules/learn-about-datacenter-design/5-key-zones"},
+  legrand:{t:"Legrand — Data center grey space",u:"https://www.legrand.com/datacenter/en/spaces/data-center-grey-space"},
+  tia:{t:"TIA-942 spaces — BICSI RCDD study guide",u:"https://open-exam-prep.com/study-guides/bicsi-rcdd/specialized-environments/data-centers"},
+  ashrae:{t:"ASHRAE TC 9.9 thermal guidelines — BICSI study guide",u:"https://open-exam-prep.com/study-guides/bicsi-dcdc/ch06-mechanical-cooling/sec04-ashrae-thermal-close-coupled-liquid"},
+  ashraeW:{t:"HPAC — ASHRAE liquid-cooling W classes",u:"https://www.hpac.com/archive/ashrae-introduces-thermal-guidelines-liquid-cooled-data-processing-environments"},
+  iso30134:{t:"ISO/IEC 30134-2:2026 — PUE",u:"https://www.iso.org/standard/30134-2?browse=ics"},
+  cmarket:{t:"C Marketnotes — Data Center Layout Overview",u:"https://cmarketnotes.com/data-center-layout-overview/"},
+  vocusBBU:{t:"共識之外 — AI 資料中心不能斷電：BBU、UPS 與 Backup Power",u:"https://vocus.cc/article/6a7de712fd89780001ab864f"},
+  vocusRack:{t:"共識之外 — 一次看懂機櫃、叢集與資料中心",u:"https://vocus.cc/article/6a7dc8a9fd89780001a43e81"},
+  dsx:{t:"NVIDIA — Vera Rubin DSX reference design & Omniverse DSX blueprint",u:"https://nvidianews.nvidia.com/news/nvidia-releases-vera-rubin-dsx-ai-factory-reference-design-and-omniverse-dsx-digital-twin-blueprint-with-broad-industry-support"},
+  fox800:{t:"Taipei Times — Hon Hai × Nvidia AI factory infrastructure (800 VDC, K-1)",u:"https://www.taipeitimes.com/News/biz/archives/2025/10/15/2003845478"},
+  fox100:{t:"Deccan Chronicle (Reuters) — Foxconn AI data centre to have 100 MW",u:"https://www.deccanchronicle.com/technology/foxconn-says-ai-data-centre-with-nvidia-to-have-100-mw-of-power-1880086"},
+  cushman:{t:"Cushman & Wakefield — APAC Data Centre Construction Cost Guide 2026",u:"https://www.cushmanwakefield.com/en/singapore/news/apac-dc-market-faces-structural-cost-shift-amid-rising-ai-requirements"},
+  wp110:{t:"Schneider Electric — White Paper 110: The AI Disruption",u:"https://download.schneider-electric.com/doc/SPD_WP110_EN/WP110_V2.1_EN.pdf"}
+};
+
+const UI={
+  eyebrow:{zh:"AIDC 參考架構",en:"AIDC reference architecture"},
+  title:{zh:"AIDC 配置圖解",en:"AIDC Layout Explorer"},
+  tagline:{zh:"從併網點到機櫃",en:"From Grid to Rack"},
+  subtitle:{zh:"以一座 80 MW 示意園區，逐層呈現電力、冷卻、用水與網路從併網點到機櫃的路徑。各元件附評估重點與公開資料來源。",en:"An illustrative 80 MW campus, explored level by level: how power, cooling, water and network run from the point of interconnection to the rack. Each component lists due-diligence questions and public sources."},
+  tour:{zh:"3 分鐘導覽",en:"3-minute walkthrough"},
+  archBtn:{zh:"電力架構演進 →",en:"Power architecture →"},
+  archKick:{zh:"電力架構",en:"Power architecture"},
+  archTitle:{zh:"AC 轉 DC 的位置，正一路往外移",en:"Where AC becomes DC is moving outward"},
+  archLede:{zh:"機櫃功率從百 kW 走向 MW 等級，交流轉直流的位置從機櫃內，移到旁邊的電源側櫃，再移到灰區的固態變壓器。轉換點越往外，機櫃內留給運算的空間越多，故障影響範圍也越集中。",en:"As racks climb from hundreds of kW to MW scale, the AC-to-DC step moves from inside the rack to a power sidecar, and then to a solid-state transformer in the grey space. The further out the conversion, the more rack space goes to compute, and the more concentrated the fault domain."},
+  close:{zh:"關閉",en:"Close"},
+  stepK:{zh:"導覽",en:"Tour"},outK:{zh:"情境模擬",en:"Scenario"},
+  ph1:{zh:"第一期",en:"Phase 1"},ph2:{zh:"含第二期",en:"+ Phase 2"},phaseT:{zh:"分期（園區尺度）",en:"Phasing (campus scale)"},
+  hLevels:{zh:"縮放層級",en:"Zoom levels"},qLevels:{zh:"看哪裡",en:"Where"},qLayers:{zh:"看哪個系統",en:"Which system"},qScen:{zh:"如果改變…",en:"What if"},hLayers:{zh:"系統圖層",en:"System layers"},hScen:{zh:"設計選項",en:"Design options"},
+  disclaimer:{zh:"示意參考設計，非任何特定案場。數據取自公開資料，來源列於各元件。",en:"Illustrative reference design; not based on any specific facility. Figures come from public sources cited on each component."},
+  credit:{zh:"© 2026 Wan-Ting Hsu",en:"© 2026 Wan-Ting Hsu"},
+  hint:{zh:"拖曳平移 · 滾輪縮放 · 點選元件",en:"Drag to pan · scroll to zoom · click a component"},
+  explain:{zh:"說明",en:"Explain"},
+  outage:{zh:"模擬市電中斷",en:"Simulate a utility outage"},
+  outageStop:{zh:"結束模擬",en:"End simulation"},
+  red:{zh:"冗餘等級",en:"Redundancy"},cool:{zh:"機房世代",en:"Hall generation"},dist:{zh:"配電架構",en:"Power distribution"},rej:{zh:"散熱排放：用水與用電",en:"Heat rejection: water vs energy"},
+  liquid:{zh:"AI 液冷",en:"AI liquid"},air:{zh:"傳統氣冷",en:"Legacy air"},evap:{zh:"冷卻塔",en:"Cooling tower"},dry:{zh:"乾冷器",en:"Dry cooler"},
+  dashT:{zh:"園區儀表（示意）",en:"Campus gauges (illustrative)"},
+  itload:{zh:"IT 負載",en:"IT load"},pue:{zh:"設計 PUE",en:"Design PUE"},facility:{zh:"總用電 ≈ IT × PUE",en:"Facility ≈ IT × PUE"},
+  racks:{zh:"機櫃數",en:"Racks"},density:{zh:"每櫃功率",en:"Rack density"},water:{zh:"冷卻用水",en:"Cooling water"},
+  waterHi:{zh:"較高（蒸發散熱）",en:"Higher (evaporative)"},waterLo:{zh:"接近零（不蒸發）",en:"Near zero (no evaporation)"},
+  dashNoteL:{zh:"IT 負載 = 機櫃數 × 每櫃功率。液冷以 NVL72 參考設計每櫃 132 kW 估算；氣冷以 Uptime 2025 典型 7.5 kW 估算。PUE 為可調示意值。",en:"IT load = racks × kW per rack. Liquid uses the 132 kW NVL72 reference design; air uses the 7.5 kW typical rack from Uptime 2025. PUE is an adjustable assumption."},
+  hide:{zh:"收合",en:"Hide"},show:{zh:"儀表",en:"Gauges"},
+  upstream:{zh:"上游",en:"Upstream"},downstream:{zh:"下游",en:"Downstream"},pmq:{zh:"評估重點",en:"Due-diligence questions"},sources:{zh:"來源",en:"Sources"},
+  noneRel:{zh:"—",en:"—"},
+  emptyT:{zh:"使用說明",en:"How to read this"},
+  empty1:{zh:"縮放層級：L0 園區至 L4 機櫃。",en:"Zoom levels: L0 campus to L4 rack."},
+  empty2:{zh:"系統圖層：電力、冷卻、用水、網路、消防、結構，可分別開關。",en:"System layers: power, cooling, water, network, fire and structure, each switchable."},
+  empty3:{zh:"點選元件：查看功能、上下游關係、評估重點與資料來源。",en:"Select a component for its function, upstream and downstream links, due-diligence questions and sources."},
+  empty4:{zh:"設計選項：市電中斷、冗餘等級、機房世代、配電架構、散熱排放與分期。",en:"Design options: utility outage, redundancy, hall generation, power distribution, heat rejection and phasing."},
+  empty5:{zh:"3 分鐘導覽：依設計決策的順序瀏覽八個重點。",en:"3-minute walkthrough: eight key points in the order design decisions are made."},
+  explodeOn:{zh:"展開",en:"Explode"},explodeOff:{zh:"收合",en:"Collapse"},
+  prev:{zh:"上一步",en:"Back"},next:{zh:"下一步",en:"Next"},close:{zh:"關閉",en:"Close"},play:{zh:"自動播放",en:"Auto-play"},pause:{zh:"暫停",en:"Pause"},
+  zoneTag:{zh:"位置",en:"Where"},
+  illus:{zh:"示意",en:"illustrative"},
+  byline:{zh:"Wan-Ting (Alex) Hsu",en:"Wan-Ting (Alex) Hsu"},
+  contact:{zh:"聯絡",en:"Contact"},
+  caseK:{zh:"公開案例",en:"Public example"},
+  caseP:{zh:"800 VDC 已有業者宣布導入。例如鴻海於 2025 年 10 月宣布，將在高雄 K-1 AI 資料中心採用 NVIDIA 800 VDC 電力架構。",en:"Operators have begun announcing 800 VDC deployments. For example, in October 2025 Foxconn announced it would adopt NVIDIA's 800 VDC architecture at its K-1 AI data center in Kaohsiung."}
+};
+
+const LEVELS=[
+  {id:0,code:"L0",n:{zh:"園區",en:"Campus"},s:{zh:"土地、用電、用水、光纖",en:"Land, power, water, fiber"}},
+  {id:1,code:"L1",n:{zh:"建築",en:"Building"},s:{zh:"掀開屋頂看內部",en:"Roof lifted off"}},
+  {id:2,code:"L2",n:{zh:"空間分區",en:"Space zones"},s:{zh:"白區、灰區、支援空間",en:"White, grey, support"}},
+  {id:3,code:"L3",n:{zh:"機房與系統",en:"Rooms & systems"},s:{zh:"電力室、機房、冷卻主機房",en:"Electrical, data hall, plant"}},
+  {id:4,code:"L4",n:{zh:"機櫃",en:"Rack"},s:{zh:"AI 機櫃爆炸圖",en:"Exploded AI rack"}}
+];
+const ROOMS=[
+  {id:"elec",n:{zh:"電力室",en:"Electrical"}},
+  {id:"hall",n:{zh:"資料機房",en:"Data hall"}},
+  {id:"cup",n:{zh:"冷卻主機房",en:"Cooling plant"}},
+  {id:"support",n:{zh:"支援空間",en:"Support"}}
+];
+const LAYERS=[
+  {id:"power",n:{zh:"電力",en:"Power"},key:[["--power","dash",{zh:"市電／關鍵負載",en:"Utility / critical"}],["--gen","dash",{zh:"發電機",en:"Generators"}],["--batt","dash",{zh:"電池",en:"Battery"}]]},
+  {id:"heat",n:{zh:"散熱",en:"Cooling"},key:[["--heat","dash",{zh:"回水（帶熱）",en:"Return (hot)"}],["--cold","dash",{zh:"供水（冷）",en:"Supply (cold)"}]]},
+  {id:"water",n:{zh:"用水",en:"Water"},key:[["--water","dash",{zh:"補給水",en:"Makeup water"}]]},
+  {id:"net",n:{zh:"網路",en:"Network"},key:[["--net","dash",{zh:"光纖與核心網路",en:"Fiber & core"}]]},
+  {id:"fire",n:{zh:"消防與安全",en:"Fire & security"},key:[["--fire","dot",{zh:"偵測管網／防火分區",en:"Detection / fire zones"}]]},
+  {id:"struct",n:{zh:"結構與載重",en:"Structure"},key:[["#efe5d0","fill",{zh:"載重關注區（著色）",en:"Load zones (tinted)"}]]}
+];
+function swatch(k){const c=k[0].startsWith("--")?`var(${k[0]})`:k[0];
+ if(k[1]==="fill") return `<svg width="18" height="10" aria-hidden="true"><rect x="1" y="1" width="16" height="8" fill="${c}" stroke="#9a7a3e" stroke-width="1"/></svg>`;
+ if(k[1]==="dot") return `<svg width="18" height="10" aria-hidden="true"><line x1="1" y1="5" x2="17" y2="5" stroke="${c}" stroke-width="2" stroke-dasharray="2 3" stroke-linecap="round"/></svg>`;
+ return `<svg width="18" height="10" aria-hidden="true"><line x1="0" y1="5" x2="18" y2="5" stroke="${c}" stroke-width="5" stroke-opacity=".14"/><line x1="0" y1="5" x2="18" y2="5" stroke="${c}" stroke-width="2" stroke-dasharray="5 4"/></svg>`;}
+const ZONE={
+  yard:{zh:"戶外設備場 Yard",en:"Yard"},grey:{zh:"灰區 Grey space",en:"Grey space"},white:{zh:"白區 White space",en:"White space"},
+  support:{zh:"支援空間 Support",en:"Support space"},rack:{zh:"機櫃內 In-rack",en:"In-rack"},site:{zh:"園區 Site",en:"Site"}
+};
+const SYS={power:{zh:"電力",en:"Power"},heat:{zh:"散熱",en:"Cooling"},water:{zh:"用水",en:"Water"},net:{zh:"網路",en:"Network"},fire:{zh:"消防與安全",en:"Fire & security"},struct:{zh:"結構",en:"Structure"},space:{zh:"空間",en:"Space"}};
+
+/* Component catalogue. lv = levels where the label shows; room = L3 room. */
+const C={
+grid:{z:"yard",s:"power",lv:[0,1],n:{zh:"輸電線與併網點",en:"Transmission line & point of interconnection"},
+ d:{zh:"電網與園區的併接點（point of interconnection）。能拿到多少 MW、何時通電，是 AI 園區最大的時程風險；Uptime 2025 調查中，電力取得已是營運商的主要擔憂之一。",en:"Where the grid hands high-voltage power to the campus. How many MW, and when energisation happens, is the biggest schedule risk for an AI campus; power availability ranks among operators' top concerns in Uptime's 2025 survey."},
+ pm:{zh:["可用容量幾 MW？通電日（energization date）是哪天？","能否分期上電？幾條獨立線路進來？","線路與變電站成本由誰負擔？"],en:["How many MW, and what is the energisation date?","Can capacity be phased? How many independent feeds?","Who pays for the line and the substation?"]},src:["uptime25"]},
+substation:{z:"yard",s:"power",lv:[0,1],n:{zh:"業主變電站",en:"On-site substation"},
+ d:{zh:"把輸電電壓降到園區的中壓配電。大型 AI 園區常需自建；NVIDIA 文件以 13.8 kV 為中壓示例。主變壓器屬長交期設備。",en:"Steps transmission voltage down to the campus medium-voltage network. Large AI campuses often need their own; NVIDIA uses 13.8 kV as its medium-voltage example. Main transformers are long-lead items."},
+ pm:{zh:["誰設計、誰蓋、誰擁有、誰維護？","主變壓器交期？是否需提前下訂？"],en:["Who designs, builds, owns and maintains it?","What is the main-transformer lead time? Order early?"]},src:["nv800"]},
+bess:{z:"yard",s:"power",lv:[0,1],n:{zh:"電池儲能系統",en:"Battery energy storage (BESS)"},
+ d:{zh:"大型電池系統。除了備援，也能在尖峰放電、低載充電，平穩 AI 訓練時劇烈的用電波動；NVIDIA 把儲能列為 800 VDC 架構的一部分，用來吸收負載尖峰。",en:"Utility-scale batteries. Beyond backup, they discharge at peaks and recharge at low load to smooth the sharp power swings of AI training; NVIDIA makes storage part of its 800 VDC architecture to absorb load spikes."},
+ pm:{zh:["儲能是為了備援、尖峰管理，還是參與電網服務？","電池消防與安全距離規定？"],en:["Is storage for backup, peak management or grid services?","Fire-safety rules and separation distances?"]},src:["nv800","vocusBBU"]},
+gens:{z:"yard",s:"power",lv:[0,1,3],room:"elec",n:{zh:"發電機陣列",en:"Generator yard"},
+ d:{zh:"市電長時間中斷時的主要備援電源，常見為柴油機組，也開始採用天然氣。台數隨冗餘等級增加：N+1 多一台，2N 整套兩份。Uptime 2025：發電機故障占電力相關停機原因的 28%。",en:"The main backup source during long utility outages, usually diesel, increasingly natural gas. Unit count grows with redundancy: N+1 adds one, 2N doubles the set. Uptime 2025: generator failure is behind 28% of power-related outages."},
+ pm:{zh:["排放許可、噪音限制、測試頻率規定？","現場燃料存量的設計時數與補給方式？","N+1 還是 2N？"],en:["Emission permits, noise limits, required test runs?","Fuel supply and hours of storage?","N+1 or 2N?"]},src:["uptime25","vocusBBU","tier"]},
+fuel:{z:"yard",s:"power",lv:[0,1],n:{zh:"儲油槽",en:"Fuel storage"},
+ d:{zh:"供發電機長時間運轉的燃料。存量決定長時間停電時的可運轉時數，也涉及消防與環保許可。",en:"Fuel for long generator runs. Storage sets how long the site can ride through an outage and triggers fire and environmental permits."},
+ pm:{zh:["設計運轉時數？","補油合約與優先供應條款？"],en:["How many hours of runtime is it sized for?","Refuelling contract and priority-supply terms?"]},src:["cmarket"]},
+heatrej:{z:"yard",s:"heat",lv:[0,1,3],room:"cup",n:{zh:"冷卻塔／乾冷器",en:"Cooling towers / dry coolers"},
+ d:{zh:"熱排放的最後一段，將熱量排至大氣。冷卻塔靠蒸發，省電但耗水；乾冷器不蒸發，省水但較耗電。Microsoft 改用不蒸發的封閉迴路設計後，每座資料中心每年省水逾 1.25 億公升，但年耗電略增。",en:"The last leg of the heat relay, rejecting heat to the air. Cooling towers evaporate water: less power, more water. Dry coolers don't: less water, more power. Microsoft's non-evaporative closed-loop design saves over 125 million litres per data center per year at a small increase in annual energy."},
+ pm:{zh:["當地缺水嗎？用水許可？","冷卻塔與乾冷器的 PUE、WUE 取捨？"],en:["Is water scarce here? Water permits?","What is the PUE vs WUE trade-off?"]},src:["mswater","cmarket"]},
+water:{z:"yard",s:"water",lv:[0,1],n:{zh:"水源與儲水槽",en:"Water supply & storage"},
+ d:{zh:"冷卻塔補給水（makeup water）與日常用水來源。用水效率 WUE = 年用水量 ÷ IT 用電（L/kWh）；Microsoft 2024 財年全球平均 0.30 L/kWh。",en:"Makeup water for cooling towers plus domestic water. Water usage effectiveness WUE = annual water ÷ IT energy (L/kWh); Microsoft's FY2024 global average was 0.30 L/kWh."},
+ pm:{zh:["能否使用再生水？","乾旱季的供水優先順序？"],en:["Can reclaimed water be used?","Supply priority during drought?"]},src:["mswater"]},
+fiber:{z:"yard",s:"net",lv:[0,1],n:{zh:"光纖雙路由",en:"Diverse fiber routes"},
+ d:{zh:"至少兩條不同路徑、從不同方向進入園區的光纖，避免一次施工挖斷就斷線。光纖在建築的進線室（Entrance Room）接入。",en:"At least two physically separate fiber routes entering from different directions, so one dig cannot cut the site off. They land in the building's entrance room."},
+ pm:{zh:["幾家電信業者？幾條獨立路由？","到最近網路交換點多遠？"],en:["How many carriers and independent routes?","How far to the nearest network exchange?"]},src:["tia"]},
+expansion:{z:"site",s:"space",lv:[0,1],n:{zh:"第二期擴建用地",en:"Phase 2 expansion land"},
+ d:{zh:"AI 園區多分期上電。公開案例中，有 AI 資料中心規劃 100 MW、從 20 MW 起步分期擴充。預留土地與電力容量，決定能否持續成長。",en:"AI campuses are usually energised in phases. One public example plans 100 MW, starting at 20 MW and expanding in steps. Reserved land and power decide whether the site can keep growing."},
+ pm:{zh:["第二期的電力容量有沒有先保留？","土地有無優先承購權？"],en:["Is Phase 2 power capacity reserved now?","Is there a right of first refusal on the land?"]},src:["fox100"]},
+security:{z:"site",s:"fire",lv:[0,1],n:{zh:"周界安全",en:"Perimeter security"},
+ d:{zh:"圍籬、警衛室、車輛管制與監視系統，搭配建築內門禁，形成由外到內的多層實體安全。",en:"Fence, gatehouse, vehicle control and CCTV, combined with access control inside, form layered physical security from the perimeter in."},
+ pm:{zh:["客戶要求的安全分級與稽核？"],en:["What security tiers and audits do tenants require?"]},src:["cmarket"]},
+bldg:{z:"site",s:"space",lv:[0,1],n:{zh:"資料中心主建築",en:"Data center building"},
+ d:{zh:"本示意為單層大跨距建築：北側灰區（電力室）、中段白區（資料機房）、南側支援空間；冷卻主機房在東側獨立一棟。灰區大小跟著白區走；AI 機櫃功率越高，同樣的白區需要越多配電與冷卻設備。",en:"Illustrated as a single-storey, long-span building: grey space (electrical rooms) to the north, white space (data halls) in the middle, support space to the south, and a separate central cooling plant to the east. Grey space scales with white space; the denser the AI racks, the more power and cooling plant the same white space needs."},
+ pm:{zh:["單層還是多層？屋頂設備載重？","工期與建照流程？"],en:["Single or multi-storey? Roof equipment loads?","Schedule and permitting path?"]},src:["mslearn","legrand"]},
+yardZ:{z:"yard",s:"space",lv:[2],zone:1,n:{zh:"戶外設備場",en:"Yard"},
+ d:{zh:"園區戶外的大型設備區：變電站、發電機、儲能、冷卻塔或乾冷器、儲油槽。牽涉用地、環評、噪音與排放許可。",en:"The outdoor plant: substation, generators, storage, cooling towers or dry coolers, fuel. It drives land, environmental, noise and emission permits."},
+ pm:{zh:["噪音與排放能否在法規內？"],en:["Can noise and emissions stay within limits?"]},src:["cmarket"]},
+greyZ:{z:"grey",s:"space",lv:[2],zone:1,n:{zh:"灰區",en:"Grey space"},
+ d:{zh:"不放 IT、但負責配電、冷卻、備援的支援空間。灰區要多大由白區決定；Tier 越高、冗餘越多，灰區越大。",en:"Non-IT space that powers, cools and backs up the IT. Its size follows the white space; the higher the Tier and redundancy, the larger it gets."},
+ pm:{zh:["冗餘等級對灰區面積與 capex 的影響？"],en:["How does redundancy change grey-space area and capex?"]},src:["mslearn","legrand"]},
+whiteZ:{z:"white",s:"space",lv:[2],zone:1,n:{zh:"白區",en:"White space"},
+ d:{zh:"放伺服器、機櫃、儲存與網路設備的空間，也是租約與營收的計價基礎。",en:"Where servers, racks, storage and network gear live; the basis for leases and revenue."},
+ pm:{zh:["以 MW 還是面積計價？地坪載重？"],en:["Priced per MW or per area? Floor loading?"]},src:["mslearn"]},
+supportZ:{z:"support",s:"space",lv:[2],zone:1,n:{zh:"支援空間",en:"Support space"},
+ d:{zh:"監控中心、進線室、辦公、卸貨與暫存組裝區。AI 機櫃整櫃出貨，卸貨與搬運動線要先設計。",en:"Operations center, entrance room, offices, loading dock and staging. AI racks arrive fully integrated, so dock and route design come first."},
+ pm:{zh:["整櫃運輸路線、卸貨平台高度與載重？"],en:["Delivery route, dock height and load rating for whole racks?"]},src:["cmarket","vocusRack"]},
+mvsg:{z:"grey",s:"power",lv:[3],room:"elec",n:{zh:"中壓開關設備",en:"Medium-voltage switchgear"},
+ d:{zh:"園區中壓配電的總開關與保護，把變電站送來的電分配到各電力室。",en:"Main switching and protection for the campus medium-voltage network, feeding each electrical room from the substation."},
+ pm:{zh:["交期與在地維修能量？"],en:["Lead time and local service capability?"]},src:["nv800"]},
+xfmr:{z:"grey",s:"power",lv:[3],room:"elec",n:{zh:"變壓器",en:"Transformer (MV/LV)"},
+ d:{zh:"把中壓降成 400／415／480 V 低壓；NVIDIA 描述今日主流是 415 V 交流進機房。全球交期長，是採購關鍵項。",en:"Steps medium voltage down to 400/415/480 V; NVIDIA describes 415 V AC into the hall as today's norm. Global lead times are long, so it is a key procurement item."},
+ pm:{zh:["交期？備品策略？"],en:["Lead time? Spares strategy?"]},src:["nv800"]},
+ats:{z:"grey",s:"power",lv:[3],room:"elec",n:{zh:"自動切換開關",en:"Automatic transfer switch (ATS)"},
+ d:{zh:"市電異常時自動把電源切到發電機，恢復後再切回。Uptime 2025：切換開關故障占電力相關停機原因的 36%。",en:"Switches the load to generators when the utility fails, and back when it returns. Uptime 2025: transfer-switch failure is behind 36% of power-related outages."},
+ pm:{zh:["切換測試的頻率與紀錄？"],en:["How often is transfer tested and logged?"]},src:["uptime25"]},
+lvsg:{z:"grey",s:"power",lv:[3],room:"elec",n:{zh:"低壓開關設備",en:"Low-voltage switchgear"},
+ d:{zh:"低壓的總開關箱，負責分路與斷路保護，再送到 UPS 與末端配電。",en:"The low-voltage switchboard: splits circuits and provides breaker protection before the UPS and final distribution."},
+ pm:{zh:["分路容量是否預留擴充？"],en:["Is circuit capacity reserved for growth?"]},src:["cmarket"]},
+ups:{z:"grey",s:"power",lv:[3],room:"elec",n:{zh:"不斷電系統 UPS",en:"Uninterruptible power supply (UPS)"},
+ d:{zh:"在市電中斷至發電機穩定供電之間承載負載（ride-through），並穩定電壓品質。Uptime 2025：UPS 故障是電力相關停機最常見的原因（42%）。Schneider Galaxy VXL 單機可帶 1.25 MW，四台並聯到 5 MW。",en:"Bridges the gap until generators carry the load, and conditions the power. Uptime 2025: UPS failure is the most common cause of power-related outages (42%). Schneider's Galaxy VXL carries 1.25 MW per frame, 5 MW with four in parallel."},
+ pm:{zh:["N+1 還是 2N？電池備援時間（分鐘）？","維護時能否不停機（Tier III）？"],en:["N+1 or 2N? Minutes of battery autonomy?","Concurrently maintainable (Tier III)?"]},src:["uptime25","sevxl","tier"]},
+batt:{z:"grey",s:"power",lv:[3],room:"elec",n:{zh:"電池室",en:"Battery room"},
+ d:{zh:"UPS 的電池組。需要獨立防火分區、溫度控制與通風；電池由電芯、模組與電池管理系統（BMS）組成。",en:"The UPS battery strings. Needs its own fire compartment, temperature control and ventilation; batteries are built from cells and modules managed by a BMS."},
+ pm:{zh:["鋰電還是鉛酸？消防設計？更換週期？"],en:["Lithium or lead-acid? Fire design? Replacement cycle?"]},src:["vocusBBU","cmarket"]},
+dcstore:{z:"grey",s:"power",lv:[3],room:"elec",n:{zh:"直流側儲能",en:"DC-side energy storage"},
+ d:{zh:"在 800 VDC 架構中，儲能可以更直接地接在直流骨幹上；NVIDIA 將儲能列入架構，用來吸收負載尖峰與次秒級的 GPU 功率波動。",en:"In an 800 VDC architecture, storage can attach more directly to the DC backbone; NVIDIA includes storage to absorb load spikes and sub-second GPU power swings."},
+ pm:{zh:["儲能放在設施端、排端還是櫃端？"],en:["Is storage at the facility, row or rack level?"]},src:["nv800"]},
+rect:{z:"grey",s:"power",lv:[3],room:"elec",n:{zh:"整流器／直流電力區塊",en:"Rectifier / DC power block"},
+ d:{zh:"800 VDC 架構在資料中心邊界把 13.8 kV 交流一次轉成 800 V 直流，省掉多次交直流轉換；NVIDIA 預計 2027 年隨 Kyber 機櫃量產。已有業者宣布導入，例如鴻海高雄 K-1。備援電源的接入方式依設計而異，此處為示意。",en:"An 800 VDC design converts 13.8 kV AC to 800 V DC once at the facility edge, removing several AC/DC stages; NVIDIA targets volume with Kyber racks in 2027, and operators have begun announcing deployments (e.g. Foxconn K-1, Kaohsiung). How backup sources tie in varies by design; shown schematically."},
+ pm:{zh:["既有機房能否混合 AC 與 800 VDC？","安全規範與維修人力是否到位？"],en:["Can AC and 800 VDC coexist in an existing hall?","Are safety codes and trained technicians in place?"]},src:["nv800","fox800"]},
+bside:{z:"grey",s:"power",lv:[3],room:"elec",n:{zh:"B 路電力室（預留）",en:"B-side electrical room (reserved)"},
+ d:{zh:"N+1 只多一組備用設備；2N 則要整套第二條獨立電力路徑（A/B feeds）。切換至 2N 時，圖中顯示此電力室的設備。",en:"N+1 adds one spare unit; 2N needs a complete second, independent power path (A/B feeds). Switch to 2N to fill this room."},
+ pm:{zh:["客戶的 SLA 要求哪一種冗餘？"],en:["Which redundancy does the customer SLA require?"]},src:["tier","uptime25"]},
+rack:{z:"white",s:"power",lv:[3],room:"hall",n:{zh:"AI 機櫃",en:"AI rack"},
+ d:{zh:"例如 NVIDIA GB300 NVL72：一櫃 72 顆 Blackwell Ultra GPU、36 顆 Grace CPU，全液冷整櫃式設計。Schneider 與 NVIDIA 的參考設計每櫃最高 132 kW；一般機櫃典型約 7.5 kW。",en:"For example NVIDIA GB300 NVL72: 72 Blackwell Ultra GPUs and 36 Grace CPUs in one fully liquid-cooled rack-scale system. The Schneider–NVIDIA reference design supports up to 132 kW per rack, against a typical 7.5 kW for ordinary racks."},
+ pm:{zh:["每櫃 kW、重量、液冷比例？","整櫃交貨的運輸與安裝路線？"],en:["kW per rack, weight, share of liquid cooling?","How are integrated racks delivered and installed?"]},src:["gb300","se132","uptime25"]},
+busway:{z:"white",s:"power",lv:[3],room:"hall",n:{zh:"匯流排槽",en:"Busway"},
+ d:{zh:"架設於機櫃排上方的銅排配電系統，供電至每一櫃。",en:"Overhead copper-bar “power rails” above each row, tapping power to every rack."},
+ d800:{zh:"800 VDC 匯流排：同樣粗細的導線比 415 V AC 多送 85% 電力，銅用量少 45%（NVIDIA）。",en:"800 VDC busway: the same conductor carries 85% more power than 415 V AC, with 45% less copper (NVIDIA)."},
+ pm:{zh:["每排容量是否預留下一代機櫃？"],en:["Is row capacity sized for the next rack generation?"]},src:["nv800"]},
+cdu:{z:"white",s:"heat",lv:[3],room:"hall",n:{zh:"冷卻液分配單元 CDU",en:"Coolant distribution unit (CDU)"},
+ d:{zh:"液冷系統的核心設備：在大樓端冷卻水（FWS）與伺服器端技術冷卻迴路（TCS）之間交換熱，提供乾淨冷卻液，並把二次側供液溫度維持在露點以上避免結露。兩邊的水不會混在一起。",en:"The heart of liquid cooling: exchanges heat between the facility water system (FWS) and the technology cooling system (TCS), supplies clean coolant, and keeps secondary supply above dew point to prevent condensation. The two loops never mix."},
+ pm:{zh:["CDU 由伺服器廠還是機房業主負責？","冗餘泵浦與漏液偵測？"],en:["Does the server vendor or the facility own the CDU?","Redundant pumps and leak detection?"]},src:["vertiv","se132"]},
+crah:{z:"white",s:"heat",lv:[3],room:"hall",n:{zh:"機房空調 CRAH",en:"Computer room air handler (CRAH)"},
+ d:{zh:"以冰水盤管降溫、本身不含壓縮機的送風設備，把冷風送進冷通道。ASHRAE TC 9.9 建議伺服器進風口溫度維持 18–27°C。",en:"A fan-coil unit cooled by chilled water, with no compressor, pushing cold air into the cold aisle. ASHRAE TC 9.9 recommends 18–27°C at the server inlet."},
+ pm:{zh:["進風溫度設定？能否提高以增加自然冷卻時數？"],en:["Inlet set-point? Can it rise to gain free-cooling hours?"]},src:["ashrae","cmarket"]},
+contain:{z:"white",s:"heat",lv:[3],room:"hall",n:{zh:"熱通道封閉",en:"Hot-aisle containment"},
+ d:{zh:"用門與頂板把熱通道圍起來，不讓熱風和冷風混在一起，是氣冷機房最有效的節能做法之一。",en:"Doors and roof panels enclose the hot aisle so hot and cold air never mix; one of the most effective efficiency measures in air-cooled halls."},
+ pm:{zh:["既有機房改為液冷時，封閉系統如何調整？"],en:["What happens to containment when a hall is retrofitted for liquid?"]},src:["cmarket"]},
+mda:{z:"white",s:"net",lv:[3],room:"hall",n:{zh:"主配線區 MDA",en:"Main distribution area (MDA)"},
+ d:{zh:"TIA-942 定義的核心空間：放主交叉連接與核心路由器、交換器，每座資料中心至少一個。",en:"The TIA-942 core space holding the main cross-connect and core routers and switches; every data center needs at least one."},
+ pm:{zh:["MDA 是否雙點備援？"],en:["Is the MDA duplicated for resilience?"]},src:["tia"]},
+hda:{z:"white",s:"net",lv:[3],room:"hall",n:{zh:"水平配線區 HDA",en:"Horizontal distribution area (HDA)"},
+ d:{zh:"TIA-942：放服務一區機櫃的交換器與水平交叉連接，功能相當於機房內的電信室。AI 叢集的機櫃之間（scale-out）靠大量光纖與交換器互連。",en:"TIA-942: holds the horizontal cross-connect and switches serving a zone of racks. AI clusters link racks to each other (scale-out) with large volumes of fiber and switches."},
+ pm:{zh:["光纖線槽容量與路由？"],en:["Fiber tray capacity and routing?"]},src:["tia","vocusRack"]},
+vesda:{z:"white",s:"fire",lv:[3],room:"hall",n:{zh:"早期煙霧偵測與氣體滅火",en:"Aspirating smoke detection & clean-agent suppression"},
+ d:{zh:"天花板管網持續吸入空氣取樣，提早偵測煙霧；搭配不用水的氣體滅火保護 IT 設備。Uptime 2025：消防系統成為重大停機原因的比例比前一年增加 6 個百分點，可能與誤放增加有關。",en:"Ceiling pipework samples air continuously for early smoke detection, paired with waterless clean-agent suppression. Uptime 2025: fire-suppression systems as a cause of impactful outages rose six points, possibly reflecting more accidental discharges."},
+ pm:{zh:["滅火藥劑與誤放防護？電池室的滅火方式？"],en:["Which agent, and how are false discharges prevented? Battery rooms?"]},src:["uptime25","cmarket"]},
+slab:{z:"white",s:"struct",lv:[3],room:"hall",n:{zh:"地坪與載重",en:"Slab & floor loading"},
+ d:{zh:"AI 整櫃式系統整合了運算、電源、液冷管路，單櫃重量遠高於傳統機櫃；地坪載重、卸貨平台與搬運路線要在設計初期確認。",en:"Rack-scale AI systems integrate compute, power and liquid plumbing, so racks weigh far more than traditional ones; floor loading, dock and delivery routes must be settled early."},
+ pm:{zh:["地坪設計載重是否涵蓋下一代機櫃？"],en:["Does the slab rating cover the next rack generation?"]},src:["vocusRack","wp110"]},
+mmr:{z:"support",s:"net",lv:[3],room:"support",n:{zh:"進線室與 MMR",en:"Entrance room & meet-me room"},
+ d:{zh:"電信業者的光纖在這裡接入建築，並與客戶設備交叉連接。TIA-942 稱為 Entrance Room，可位於機房內或外。",en:"Where carrier fiber enters the building and cross-connects to tenants. TIA-942 calls it the entrance room; it can sit inside or outside the computer room."},
+ pm:{zh:["是否中立（carrier-neutral）？幾家電信進駐？"],en:["Carrier-neutral? How many carriers are present?"]},src:["tia"]},
+noc:{z:"support",s:"fire",lv:[3],room:"support",n:{zh:"監控中心 NOC／SOC",en:"Network & security operations center"},
+ d:{zh:"即時監控電力、冷卻、網路與告警的中樞，也負責門禁與監視系統。",en:"Monitors power, cooling, network and alarms in real time, alongside access control and CCTV."},
+ pm:{zh:["當地營運人力的招募條件？"],en:["Can operations staff be hired locally?"]},src:["cmarket","uptime25"]},
+dock:{z:"support",s:"struct",lv:[3],room:"support",n:{zh:"卸貨區與暫存組裝區",en:"Loading dock & staging"},
+ d:{zh:"AI 採購單位已從單台伺服器變成整個機櫃，整櫃到貨後在暫存區檢查、測試再推進機房。",en:"The unit of purchase has moved from the server to the whole rack; integrated racks are received, inspected and tested in staging before entering the hall."},
+ pm:{zh:["卸貨平台高度、門寬與載重？"],en:["Dock height, door width and load rating?"]},src:["vocusRack"]},
+chiller:{z:"grey",s:"heat",lv:[3],room:"cup",n:{zh:"冰水主機",en:"Chiller"},
+ d:{zh:"用壓縮機製造冷水。液冷可使用較高的供水溫度（ASHRAE W 等級，例如 W3 為 2–32°C），能少開冰水主機、多用自然冷卻。",en:"Makes chilled water with compressors. Liquid cooling tolerates warmer supply water (ASHRAE W classes, e.g. W3 at 2–32°C), so chillers can run less and free cooling more."},
+ pm:{zh:["設計供水溫度？自然冷卻時數？"],en:["Design supply-water temperature? Free-cooling hours?"]},src:["ashraeW","mswater"]},
+fws:{z:"grey",s:"heat",lv:[3],room:"cup",n:{zh:"設施水系統與泵浦",en:"Facility water system & pumps"},
+ d:{zh:"大樓端的冷卻水管網，在 CDU（或 CRAH）與冰水主機、散熱設備之間循環。Vertiv 稱為 FWS，伺服器端則是 TCS。",en:"The building-side water network circulating between CDUs (or CRAHs) and the chillers and heat rejection. Vertiv calls it the FWS; the server side is the TCS."},
+ pm:{zh:["管線冗餘（環狀或雙主幹）？"],en:["Pipe redundancy (loop or dual mains)?"]},src:["vertiv"]},
+ctray:{z:"rack",s:"power",lv:[4],n:{zh:"運算托盤",en:"Compute tray"},
+ d:{zh:"裝載 GPU 與 CPU 的抽屜式模組，為伺服器的運算單元；在 NVL72 這類整櫃系統中，多個運算托盤透過 NVLink 串成一台大電腦（scale-up）。",en:"The drawer-style module holding GPUs and CPUs: the server's compute unit. In rack-scale systems like NVL72, compute trays are joined by NVLink into one large computer (scale-up)."},
+ pm:{zh:["托盤可否在不停櫃的情況下更換？"],en:["Can a tray be swapped without stopping the rack?"]},src:["gb300","vocusRack"]},
+stray:{z:"rack",s:"net",lv:[4],n:{zh:"交換托盤",en:"Switch tray"},
+ d:{zh:"機櫃內讓 GPU 彼此高速溝通的交換器（NVLink switch），屬於機櫃內的 scale-up 網路。",en:"In-rack switches (NVLink switches) letting GPUs talk at high speed — the rack's scale-up network."},
+ pm:{zh:["機櫃之間（scale-out）用 InfiniBand 還是 Ethernet？"],en:["Is scale-out between racks InfiniBand or Ethernet?"]},src:["gb300","vocusRack"]},
+pshelf:{z:"rack",s:"power",lv:[4],n:{zh:"電源層",en:"Power shelf"},
+ d:{zh:"把進來的電轉成 54 V 直流給托盤。GB200／GB300 NVL72 最多有 8 層電源層；機櫃到 MW 等級時改用 800 VDC 才放得下運算。",en:"Converts incoming power to 54 V DC for the trays. GB200/GB300 NVL72 use up to eight power shelves; at MW-scale racks, 800 VDC is needed to leave room for compute."},
+ pm:{zh:["電源層備援配置？"],en:["How are power shelves made redundant?"]},src:["nv800"]},
+bbu:{z:"rack",s:"power",lv:[4],n:{zh:"電池備援單元 BBU",en:"Battery backup unit (BBU)"},
+ d:{zh:"放在機櫃裡的電池備援，離負載最近、少一段轉換，故障只影響單櫃。由電芯、模組、電池管理系統（BMS）與散熱、安全控制組成。",en:"Rack-level battery backup: closest to the load, one fewer conversion, and a fault affects only one rack. Built from cells and modules with a BMS, cooling and safety controls."},
+ pm:{zh:["BBU 由伺服器廠還是機房業主負責？消防與更換週期？"],en:["Server vendor or facility: who owns the BBU? Fire safety and replacement cycle?"]},src:["vocusBBU"]},
+manifold:{z:"rack",s:"heat",lv:[4],n:{zh:"分歧管",en:"Manifold"},
+ d:{zh:"機櫃背面的液冷水管主幹，把 CDU 送來的冷卻液分到每個托盤的冷板，再收回熱液。它和 CDU 的介面，是伺服器廠與機房業主最常需要釐清責任的地方。",en:"The vertical coolant header at the back of the rack, feeding each tray's cold plates and collecting the warm return. Its interface with the CDU is where server vendor and facility responsibilities most often need clarifying."},
+ pm:{zh:["快接頭規格與漏液責任歸屬？"],en:["Quick-disconnect spec and leak liability?"]},src:["vocusRack","vertiv"]},
+coldplate:{z:"rack",s:"heat",lv:[4],n:{zh:"冷板",en:"Cold plate"},
+ d:{zh:"貼在 GPU 與 CPU 上的金屬板，內有水道，冷卻液流經時帶走熱量，即直接液冷（direct-to-chip）。",en:"A metal plate with internal channels mounted on GPUs and CPUs; coolant flowing through carries the heat away. This is direct-to-chip liquid cooling."},
+ pm:{zh:["供液溫度上限？"],en:["Maximum coolant supply temperature?"]},src:["se132","vertiv"]},
+nvlink:{z:"rack",s:"net",lv:[4],n:{zh:"NVLink 背板",en:"NVLink spine"},
+ d:{zh:"機櫃背面的銅纜背板，把 18 個運算托盤與 9 個 NVLink 交換托盤直接相連，形成 72 顆 GPU 的單一 NVLink 網域（GB300 NVL72 約 130 TB/s）。機櫃內採銅纜，不需光收發器。圖中托盤數已簡化。",en:"A copper cable spine at the rear of the rack linking 18 compute trays to 9 NVLink switch trays, forming one 72-GPU NVLink domain (about 130 TB/s on GB300 NVL72). Copper inside the rack means no optical transceivers. Tray count is simplified in the drawing."},
+ pm:{zh:["整櫃出廠前是否完成 NVLink 測試？"],en:["Is the NVLink spine tested before the rack ships?"]},src:["gb300","vocusRack"]},
+nic:{z:"rack",s:"net",lv:[4],n:{zh:"對外網路 Scale-out",en:"Scale-out network"},
+ d:{zh:"每顆 GPU 配一張 800 Gb/s ConnectX-8 網卡，從運算托盤前方以光纖接到機櫃外的葉交換器（InfiniBand 或 Spectrum-X 乙太網路），把多個機櫃串成叢集。機櫃內靠 NVLink（scale-up），機櫃之間靠這一層（scale-out）。",en:"Each GPU has an 800 Gb/s ConnectX-8 NIC, cabled in fibre from the front of the compute tray to leaf switches outside the rack (InfiniBand or Spectrum-X Ethernet), joining racks into a cluster. NVLink scales up inside the rack; this layer scales out between racks."},
+ pm:{zh:["每櫃光纖數量與上走線槽容量？"],en:["Fibre count per rack and overhead tray capacity?"]},src:["gb300","vocusRack","tia"]}
+};
+
+const SH={
+ pshelf:{zh:"把進來的電轉成 54 V 直流送給托盤；NVL72 最多 8 層。",en:"Converts incoming power to 54 V DC for the trays; up to eight in NVL72."},
+ bbu:{zh:"機櫃內電池備援，離負載最近，故障只影響單櫃。",en:"In-rack battery backup — closest to the load, faults stay in one rack."},
+ coldplate:{zh:"貼在 GPU 上的水道金屬板，直接液冷的接觸面。",en:"Channelled metal plate on the GPU — the contact face of direct-to-chip cooling."},
+ ctray:{zh:"裝載 GPU 與 CPU 的抽屜式模組，為伺服器的運算單元。",en:"The drawer-style module holding GPUs and CPUs: the server's compute unit."},
+ stray:{zh:"NVLink 交換器，讓整櫃 GPU 像一台電腦（scale-up）。",en:"NVLink switches that make the rack act as one computer (scale-up)."},
+ manifold:{zh:"機櫃背面的冷卻液主幹，接到 CDU（圖中移到側後方以便看見）。",en:"The rear coolant header to the CDU (drawn at the rear corner so it stays visible)."},
+ nvlink:{zh:"背面銅纜，把 72 顆 GPU 連成單一網域（scale-up）。",en:"Rear copper spine joining 72 GPUs into one domain (scale-up)."},
+ nic:{zh:"托盤前方光纖，連到機櫃外的葉交換器（scale-out）。",en:"Front fibre to leaf switches outside the rack (scale-out)."}
+};
+const SIDE={pshelf:"R",bbu:"R",coldplate:"L",ctray:"R",stray:"R",manifold:"L",nvlink:"L",nic:"L"};
+/* Relations a → b (flow direction). cond: optional state test. */
+const REL=[
+ ["grid","substation"],["bess","substation"],["substation","mvsg"],
+ ["mvsg","xfmr",s=>!s.vdc],["xfmr","ats",s=>!s.vdc],["ats","lvsg",s=>!s.vdc],["lvsg","ups",s=>!s.vdc],["batt","ups",s=>!s.vdc],["ups","busway",s=>!s.vdc],
+ ["mvsg","rect",s=>s.vdc],["ats","rect",s=>s.vdc],["rect","busway",s=>s.vdc],["dcstore","busway",s=>s.vdc],
+ ["fuel","gens"],["gens","ats"],["busway","rack"],["busway","pshelf"],["bbu","pshelf"],["pshelf","ctray"],
+ ["rack","cdu",s=>s.liquid],["cdu","fws",s=>s.liquid],["rack","contain",s=>!s.liquid],["contain","crah",s=>!s.liquid],["crah","fws",s=>!s.liquid],
+ ["ctray","coldplate"],["coldplate","manifold"],["manifold","cdu"],["fws","chiller"],["chiller","heatrej"],["water","heatrej"],
+ ["fiber","mmr"],["mmr","mda"],["mda","hda"],["hda","rack"],["ctray","nvlink"],["nvlink","stray"],["ctray","nic"],["nic","hda"]
+];
+
+const SCN={
+ red:{t:{zh:"冗餘等級：N+1 與 2N",en:"Redundancy: N+1 vs 2N"},p:{zh:"N+1 增加一組備用設備（見發電機陣列與 UPS 末端的備用機組）；2N 為兩套完整且獨立的電力路徑，B 路電力室需完整複製。常見對應：Uptime Tier III（可同時維護）多以 N+1 搭配雙路配電達成，Tier IV（容錯）常見 2N。Uptime 2025 調查中，主要電力設備以 2N（42%）與 N+1（41%）最常見。",en:"N+1 adds one spare unit (see the extra generator and UPS module); 2N provides two complete, independent power paths, duplicating the entire B-side electrical room. Common mapping: Uptime Tier III (concurrently maintainable) is often met with N+1 plus dual distribution paths; Tier IV (fault tolerant) is typically 2N. In Uptime's 2025 survey, 2N (42%) and N+1 (41%) are the most common configurations for primary power equipment."},src:["uptime25","tier"]},
+ cool:{t:{zh:"機房世代：傳統氣冷與 AI 液冷",en:"Hall generation: legacy air vs AI liquid"},p:{zh:"兩種機房代表不同世代的設計基準。傳統雲端機房每櫃約 7.5 kW（Uptime 2025 典型值），以 CRAH 送冷風、熱通道封閉散熱；AI 機房如 NVL72 參考設計每櫃約 132 kW，由 CDU 經分歧管將冷卻液送至晶片冷板。同樣機櫃數下，傳統機房的 IT 負載不到 AI 機房的 6%。",en:"The two halls represent different design generations. A legacy cloud hall runs about 7.5 kW per rack (Uptime 2025 typical), cooled by CRAHs and hot-aisle containment; an AI hall such as the NVL72 reference design runs about 132 kW per rack, with CDUs feeding coolant through manifolds to cold plates on the chips. For the same rack count, the legacy hall carries under 6% of the AI hall's IT load."},src:["vertiv","se132","uptime25","ashrae"]},
+ dist:{t:{zh:"配電架構：415 V AC 與 800 VDC",en:"Distribution: 415 V AC vs 800 VDC"},p:{zh:"現行主流以變壓器降至 415 V 交流，經 UPS 進入機房，再於機櫃內轉為直流。800 VDC 於資料中心邊界一次整流，經直流匯流排送至機櫃；NVIDIA 指出同樣導線可多送 85% 電力、銅材減少 45%、端到端效率最多提升 5%。已有業者宣布導入，例如鴻海高雄 K-1。",en:"The prevailing design steps down to 415 V AC, passes through the UPS into the hall and converts to DC inside the rack. 800 VDC rectifies once at the facility edge and runs a DC busway to the rack; NVIDIA cites 85% more power per conductor, 45% less copper and up to 5% better end-to-end efficiency. Operators have begun announcing deployments, for example Foxconn at K-1 in Kaohsiung."},src:["nv800","fox800"]},
+ rej:{t:{zh:"散熱排放：用水與用電的取捨",en:"Heat rejection: the water–energy trade-off"},p:{zh:"冷卻塔以蒸發散熱，PUE 較低但耗水；乾冷器搭配封閉迴路幾乎不消耗冷卻用水，但耗電略增。選擇取決於當地的水資源與電力條件，並直接反映在 WUE 與 PUE。",en:"Cooling towers reject heat by evaporation: lower PUE, higher water use. Dry coolers on a closed loop use almost no cooling water but slightly more energy. The choice depends on local water and power constraints and shows up directly in WUE and PUE."},src:["mswater"]},
+ phase:{t:{zh:"分期開發",en:"Phased development"},p:{zh:"AI 園區多分期建置與上電。第一期即預留第二期的電力容量、用地與管線路由，可降低後續擴充的併網與施工風險。公開案例中，有 AI 資料中心規劃 100 MW、從 20 MW 起步分期擴充。此選項僅影響園區尺度（L0–L1）。",en:"AI campuses are typically built and energised in phases. Reserving Phase 2 power capacity, land and utility routes during Phase 1 reduces grid and construction risk later. One public example plans 100 MW, starting at 20 MW. This option affects the campus scale only (L0–L1)."},src:["fox100"]},
+ outage:{t:{zh:"市電中斷時的供電順序",en:"Utility outage: the transfer sequence"},src:["uptime25","cmarket"]}
+};
+const OUTAGE=[
+ {t:{zh:"正常供電",en:"Normal operation"},p:{zh:"市電經變電站、中壓開關、變壓器、ATS 與 UPS 送至機櫃；發電機待命，電池維持充飽。",en:"Utility power flows through the substation, MV switchgear, transformers, ATS and UPS to the racks; generators stand by and batteries stay charged."}},
+ {t:{zh:"市電中斷",en:"Utility lost"},p:{zh:"上游失電，UPS 立即改由電池承載負載（ride-through），IT 負載不中斷。",en:"Upstream power is lost. The UPS carries the load on battery immediately (ride-through), and the IT load is not interrupted."}},
+ {t:{zh:"發電機啟動、ATS 切換",en:"Generators start, ATS transfers"},p:{zh:"發電機啟動並穩定後，ATS 將負載切換至發電機。Uptime 2025 調查中，UPS、切換開關與發電機是電力相關停機最常見的三項原因（42%、36%、28%）。",en:"Once the generators are stable, the ATS transfers the load to them. In Uptime's 2025 survey, UPS, transfer switch and generator are the three most common causes of power-related outages (42%, 36%, 28%)."}},
+ {t:{zh:"發電機供電",en:"Running on generators"},p:{zh:"負載由發電機承擔，UPS 電池回充。可運轉時數取決於現場燃料存量與補給安排。",en:"Generators carry the load and the UPS batteries recharge. Runtime depends on on-site fuel storage and refuelling arrangements."}},
+ {t:{zh:"市電恢復",en:"Utility restored"},p:{zh:"確認市電穩定後切回市電，發電機冷機後停機，系統回到正常狀態。",en:"Once the utility is stable, the load transfers back; generators run a cool-down cycle and stop."}}
+];
+const TOUR=[
+ {set:{level:0,layers:["power","heat","water","net"]},sel:null,t:{zh:"園區概觀",en:"Campus overview"},p:{zh:"電力、冷卻排熱、用水與光纖分別由不同方向進入園區（藍、橘、青、紫）。選址評估從這四項基礎設施的可得性開始。",en:"Power, heat rejection, water and fibre each enter the campus from a different direction (blue, orange, teal, purple). Site evaluation starts with the availability of these four."}},
+ {set:{level:0,layers:["power"]},sel:"grid",t:{zh:"併網容量與時程",en:"Grid capacity and time to power"},p:{zh:"可取得的電力容量與通電日，通常比建置成本更早決定一個市場是否可行。",en:"Available capacity and the energization date often decide a market's viability before build cost does."}},
+ {set:{level:3,room:"elec",layers:["power"],outage:true},sel:"ups",t:{zh:"供電韌性：市電中斷",en:"Resilience: utility outage"},p:{zh:"市電中斷時，UPS 以電池承載負載（ride-through）；發電機穩定後由 ATS 切換。各階段可逐步檢視。",en:"When the utility fails, the UPS carries the load on battery (ride-through) until the generators are stable and the ATS transfers. Each stage can be stepped through in turn."}},
+ {set:{level:3,room:"elec",layers:["power"],red:"N+1"},sel:"bside",t:{zh:"冗餘等級與成本",en:"Redundancy and cost"},p:{zh:"N+1 增加一組備用設備；2N 需完整複製 B 路電力室。冗餘等級直接反映在資本支出與灰區面積。",en:"N+1 adds one spare unit; 2N duplicates the entire B-side electrical room. The redundancy level translates directly into capex and grey-space area."}},
+ {set:{level:3,room:"hall",layers:["heat","power"],red:"2N",liquid:true},sel:"cdu",t:{zh:"冷卻：AI 液冷機房",en:"Cooling: the liquid-cooled AI hall"},p:{zh:"NVL72 參考設計每櫃約 132 kW，需以直接液冷散熱。CDU 隔開設施水系統（FWS）與伺服器端迴路（TCS）。",en:"The NVL72 reference design runs about 132 kW per rack and requires direct liquid cooling. The CDU separates the facility water system (FWS) from the server-side loop (TCS)."}},
+ {set:{level:4,layers:["heat","power","net"]},sel:"manifold",t:{zh:"機櫃介面與責任分工",en:"Rack interfaces and responsibilities"},p:{zh:"分歧管與 CDU 的介面、BBU 的歸屬，以及機櫃內外網路的分界，是伺服器供應商與機房業主需明確劃分的範圍。",en:"The manifold-to-CDU interface, BBU ownership and the boundary between in-rack and external networks are where server vendor and facility owner need a clear split."}},
+ {set:{level:3,room:"elec",layers:["power"],vdc:true,arch:true},sel:"rect",t:{zh:"800 VDC 配電",en:"800 VDC distribution"},p:{zh:"於資料中心邊界一次整流為 800 V 直流，減少轉換段數與銅材用量。業界已開始導入，例如鴻海高雄 K-1。",en:"Rectifying once to 800 V DC at the facility edge reduces conversion stages and copper. Early deployments have been announced, for example Foxconn K-1 in Kaohsiung."}},
+ {set:{level:0,layers:["power","heat","water","net"],vdc:false,phase:2},sel:"expansion",t:{zh:"分期與複製",en:"Phasing and replication"},p:{zh:"同一套拓撲可用於比較不同地點的電力、用水、土地與成本，並預留第二期的電力容量與用地。",en:"The same topology can be used to compare power, water, land and cost across sites, with power capacity and land reserved for Phase 2."}}
+];
+
+/* ============================================================
+   STATE
+   ============================================================ */
+const S={lang:(()=>{try{return (navigator.languages&&navigator.languages.length?navigator.languages:[navigator.language||"en"]).some(l=>/^zh/i.test(l))?"zh":"en";}catch(e){return "en";}})(),level:0,room:"elec",layers:{power:true,heat:true,water:false,net:false,fire:false,struct:false},
+  red:"2N",liquid:true,vdc:false,evap:true,phase:1,pue:1.30,sel:null,outage:null,tour:null,explode:true,pull:null,dashOpen:window.innerWidth>960,hover:null,arch:false};
+const T=o=>o==null?"":(typeof o==="string"?o:(o[S.lang]??o.zh));
+const T2=o=>o==null?"":(typeof o==="string"?o:(o[S.lang==="zh"?"en":"zh"]??""));
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+</script>
+
+<script>
+/* ============================================================
+   SCENE
+   ============================================================ */
+const stage=$("stage"), canvas=$("gl");
+let renderer=null, webglOK=true;
+try{renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false});}catch(e){webglOK=false;}
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0xffffff);
+const camera=new THREE.OrthographicCamera(-1,1,1,-1,1,4000);
+scene.add(new THREE.AmbientLight(0xffffff,0.80));
+const sun=new THREE.DirectionalLight(0xffffff,0.24);sun.position.set(0.15,1,0.45);scene.add(sun);
+
+const STY={
+ ground:[0xf3f3f1,null],site:[0xfafaf8,0xcfcfca],pad:[0xf6f6f3,0xb9b9b4],road:[0xe9e9e5,null],
+ shell:[0xfbfbfa,0x8d8d88],struct:[0xffffff,0x9a9a95],part:[0xfafaf9,0xb5b5b0],
+ zGrey:[0xecece8,0xc4c4bf],zWhite:[0xffffff,0xc8c8c3],zSupport:[0xf5f3ee,0xcbc7bb],
+ equip:[0xf9f9f7,0x232323],power:[0xf9f9f7,0x232323],spare:[0xf9f9f7,0x232323],heat:[0xffffff,0x232323],cold:[0xf9f9f7,0x232323],
+ water:[0xf9f9f7,0x232323],net:[0xf9f9f7,0x232323],batt:[0xf9f9f7,0x232323],dark:[0xf1f1ef,0x232323],
+ fire:[0xfde8e6,0xd33a3a],struct2:[0xf1e9d8,0x9a7a3e],glass:[0xffffff,0x9a9a95]
+};
+const EQUIP=new Set(["equip","power","spare","cold","water","net","batt","dark"]);
+const LEDCOMP=new Set(["gens","ups","xfmr","mvsg","lvsg","ats","rect","chiller","cdu","heatrej","bess","mda","hda","crah"]);
+const LEDS=[];
+let HATCH=null;
+function hatchTex(){
+ if(HATCH) return HATCH; const c=document.createElement("canvas"); c.width=c.height=32; const g=c.getContext("2d");
+ g.fillStyle="#f7f7f5"; g.fillRect(0,0,32,32); g.strokeStyle="#e2e2de"; g.lineWidth=1;
+ for(let k=-32;k<64;k+=6){g.beginPath(); g.moveTo(k,0); g.lineTo(k+32,32); g.stroke();}
+ HATCH=new THREE.CanvasTexture(c); HATCH.wrapS=HATCH.wrapT=THREE.RepeatWrapping; return HATCH;
+}
+function ptsMat(c,size){return new THREE.PointsMaterial({color:c,size:size,sizeAttenuation:false,transparent:true,opacity:1,depthWrite:false});}
+function addScrews(m,w,h,d){
+ const e=0.0, g=new THREE.BufferGeometry(); const ix=Math.min(0.25,w*0.06), iz=Math.min(0.25,d*0.06);
+ g.setAttribute("position",new THREE.Float32BufferAttribute([
+  -w/2+ix,h/2+0.01,-d/2+iz, w/2-ix,h/2+0.01,-d/2+iz, -w/2+ix,h/2+0.01,d/2-iz, w/2-ix,h/2+0.01,d/2-iz,
+  -w/2+ix,-h/2+Math.min(0.2,h*0.1),d/2+0.01, w/2-ix,-h/2+Math.min(0.2,h*0.1),d/2+0.01, w/2+0.01,-h/2+Math.min(0.2,h*0.1),d/2-iz],3));
+ const p=new THREE.Points(g,ptsMat(0x1a1a1a,2.6)); p.userData.k=1; m.add(p);
+}
+function addLeds(m,w,h,d,comp){
+ const st=new THREE.BufferGeometry(); st.setAttribute("position",new THREE.Float32BufferAttribute([w/2-Math.min(0.6,w*0.14),h/2+0.02,-d/2+Math.min(0.6,d*0.2)],3));
+ const sp=new THREE.Points(st,ptsMat(0x7cc242,5)); m.add(sp);
+ const ac=[]; const step=Math.min(0.32,w*0.05), x0=w/2-Math.min(0.9,w*0.16), y=-h/2+h*0.42;
+ for(let k=0;k<3;k++) ac.push(x0-k*step,y,d/2+0.02);
+ for(let k=3;k<5;k++) ac.push(x0-k*step,y,d/2+0.02);
+ const ag=new THREE.BufferGeometry(); ag.setAttribute("position",new THREE.Float32BufferAttribute(ac,3));
+ ag.setAttribute("color",new THREE.Float32BufferAttribute([0.886,0.337,0.169, 0.886,0.337,0.169, 0.886,0.337,0.169, 0.82,0.82,0.80, 0.82,0.82,0.80],3));
+ const apm=new THREE.PointsMaterial({size:3.4,sizeAttenuation:false,transparent:true,vertexColors:true,depthWrite:false});
+ const ap=new THREE.Points(ag,apm); m.add(ap);
+ LEDS.push({comp,status:sp,act:ap,mesh:m});
+}
+const OBJ=[];            // tracked objects
+const COMPMESH={};       // comp id -> meshes
+const ANCHOR={};         // comp id -> THREE.Vector3 label anchor
+function track(mesh,o){
+ const rec=Object.assign({obj:mesh,area:"yard",cond:null,base:1,op:1,walln:null,roof:false,emis:false},o);
+ OBJ.push(rec); if(o.comp){(COMPMESH[o.comp]=COMPMESH[o.comp]||[]).push(mesh); mesh.userData.comp=o.comp;}
+ mesh.userData.rec=rec; return rec;
+}
+function mkMat(c){return new THREE.MeshLambertMaterial({color:c,transparent:true,opacity:1,emissive:0x000000});}
+function edges(geo,c){const l=new THREE.LineSegments(new THREE.EdgesGeometry(geo,20),new THREE.LineBasicMaterial({color:c,transparent:true,opacity:1})); l.userData.k=1; return l;}
+/* line-art face textures for equipment (drawn once, cloned per face with a repeat) */
+const ECACHE={};
+const EK={ // kind: [module width in m, side painter, top painter, canvas w, canvas h]
+ cubicle:[0.8,(g,w,h)=>{g.strokeRect(10,10,w-20,h-20); g.beginPath(); g.moveTo(w-30,h*0.42); g.lineTo(w-30,h*0.58); g.stroke(); g.strokeRect(30,34,w-60,46); for(let k=0;k<5;k++){g.beginPath(); g.moveTo(30,h-110+k*18); g.lineTo(w-30,h-110+k*18); g.stroke();}},null,128,384],
+ xfmr:[0.6,(g,w,h)=>{for(let k=0;k<6;k++){const x=12+k*20; g.beginPath(); g.moveTo(x,24); g.lineTo(x,h-24); g.stroke();}},(g,w,h)=>{g.beginPath(); g.arc(w/2,h/2,26,0,7); g.stroke();},128,256],
+ genset:[4,(g,w,h)=>{for(let k=0;k<9;k++){g.beginPath(); g.moveTo(24,34+k*22); g.lineTo(150,34+k*22); g.stroke();} g.strokeRect(200,26,112,h-52); g.beginPath(); g.moveTo(290,h/2-18); g.lineTo(290,h/2+18); g.stroke(); for(let k=0;k<9;k++){g.beginPath(); g.moveTo(362,34+k*22); g.lineTo(w-24,34+k*22); g.stroke();}},
+   (g,w,h)=>{g.strokeRect(24,24,w*0.45,h-48); for(let k=0;k<8;k++){g.beginPath(); g.moveTo(40+k*26,40); g.lineTo(40+k*26,h-40); g.stroke();} g.beginPath(); g.arc(w*0.78,h/2,30,0,7); g.stroke();},512,256],
+ container:[1,(g,w,h)=>{for(let k=0;k<4;k++){const x=16+k*32; g.beginPath(); g.moveTo(x,10); g.lineTo(x,h-10); g.stroke();}},null,128,256],
+ chiller:[2.5,(g,w,h)=>{g.strokeRect(14,14,w-28,h-28); g.lineWidth=3; for(let k=-h;k<w;k+=22){g.beginPath(); g.moveTo(k,h-14); g.lineTo(k+h,14); g.stroke();}},(g,w,h)=>{g.beginPath(); g.arc(w/2,h/2,w*0.34,0,7); g.stroke(); g.beginPath(); g.moveTo(w/2-w*0.3,h/2); g.lineTo(w/2+w*0.3,h/2); g.moveTo(w/2,h/2-w*0.3); g.lineTo(w/2,h/2+w*0.3); g.stroke();},256,256],
+ tower:[5,(g,w,h)=>{for(let k=0;k<9;k++){g.beginPath(); g.moveTo(16,30+k*24); g.lineTo(w-16,30+k*24); g.stroke();}},(g,w,h)=>{g.beginPath(); g.arc(w/2,h/2,w*0.4,0,7); g.stroke(); g.beginPath(); g.arc(w/2,h/2,w*0.12,0,7); g.stroke();},256,256],
+ dry:[3,(g,w,h)=>{for(let k=0;k<5;k++){g.beginPath(); g.moveTo(14,22+k*20); g.lineTo(w-14,22+k*20); g.stroke();}},(g,w,h)=>{g.beginPath(); g.arc(w/2,h/2,h*0.36,0,7); g.stroke();},256,128],
+ cdu:[1.2,(g,w,h)=>{g.strokeRect(12,12,w-24,h-24); for(let r=0;r<6;r++) for(let c=0;c<3;c++){g.strokeRect(30+c*26,40+r*24,14,10);}},null,128,384],
+ crah:[1.3,(g,w,h)=>{g.strokeRect(12,12,w-24,h-24); for(let k=0;k<9;k++){g.beginPath(); g.moveTo(26,36+k*16); g.lineTo(w-26,36+k*16); g.stroke();}},null,128,384],
+ battrack:[1,(g,w,h)=>{for(let r=0;r<4;r++) for(let c=0;c<2;c++) g.strokeRect(14+c*56,14+r*58,46,48);},null,128,256],
+ netrack:[0.6,(g,w,h)=>{g.strokeRect(10,10,w-20,h-20); for(let r=0;r<14;r++) for(let c=0;c<5;c++){g.beginPath(); g.arc(28+c*18,36+r*22,3.2,0,7); g.stroke();}},null,128,384],
+ wall:[3,(g,w,h)=>{g.lineWidth=2; g.strokeStyle="#c9c9c4"; g.beginPath(); g.moveTo(2,0); g.lineTo(2,h); g.stroke();},null,64,64]
+};
+function eTex(kind,part){const key=kind+part; if(ECACHE[key]) return ECACHE[key]; const k=EK[kind]; const fn=part==="side"?k[1]:k[2]; if(!fn) return null;
+ const c=document.createElement("canvas"); c.width=k[3]; c.height=part==="side"?k[4]:k[3]; const g=c.getContext("2d");
+ g.fillStyle=kind==="wall"?"#fbfbfa":"#f9f9f7"; g.fillRect(0,0,c.width,c.height); g.strokeStyle="#3b3b38"; g.lineWidth=5; g.lineCap="round"; fn(g,c.width,c.height);
+ const t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.anisotropy=renderer?Math.min(8,renderer.capabilities.getMaxAnisotropy()):1; return ECACHE[key]=t;}
+function texKind(o,sty,h){const c=o.comp;
+ if(o.area==="wall") return "wall"; if(!EQUIP.has(sty)) return null;
+ if(["mvsg","lvsg","ats","ups","rect"].includes(c)) return "cubicle";
+ if(c==="xfmr"||(c==="substation"&&sty==="power")) return "xfmr";
+ if(c==="gens") return "genset"; if(c==="bess") return "container"; if(c==="chiller") return "chiller";
+ if(c==="heatrej") return h>5?"tower":"dry"; if(c==="cdu") return "cdu"; if(c==="crah") return "crah";
+ if(c==="batt") return "battrack"; if(["mda","hda","mmr"].includes(c)) return "netrack"; return null;}
+function faceMats(kind,w,h,d,base){
+ const mod=EK[kind][0]; const side=eTex(kind,"side"), top=eTex(kind,"top");
+ const mk=(t,ru,rv)=>{if(!t) return mkMat(base); const tt=t.clone(); tt.needsUpdate=true; tt.repeat.set(Math.max(1,Math.round(ru)),kind==="wall"?1:Math.max(1,Math.round(rv))); const m=mkMat(0xffffff); m.map=tt; return m;};
+ return [mk(side,d/mod,1),mk(side,d/mod,1),mk(top,w/mod,d/mod),mkMat(base),mk(side,w/mod,1),mk(side,w/mod,1)];
+}
+function box(sty,cx,cz,w,d,h,y0,o){
+ o=o||{};
+ const [f,e]=STY[sty]; const g=new THREE.BoxGeometry(w,h,d);
+ const tk=texKind(o,sty,h); let mat=mkMat(f);
+ if(sty==="pad"){const t=hatchTex().clone(); t.needsUpdate=true; t.repeat.set(w/5,d/5); mat.map=t; mat.color.setHex(0xffffff);}
+ if(tk) mat=faceMats(tk,w,h,d,f);
+ const m=new THREE.Mesh(g,mat);
+ m.position.set(cx,(y0||0)+h/2,cz);
+ if(e!=null){ if(sty==="spare"||o.spareN1){const l=new THREE.LineSegments(new THREE.EdgesGeometry(g,20),new THREE.LineDashedMaterial({color:0x232323,dashSize:Math.max(0.12,w*0.04),gapSize:Math.max(0.08,w*0.03),transparent:true})); l.computeLineDistances(); m.add(l);} else m.add(edges(g,e)); }
+ scene.add(m); track(m,o); return m;
+}
+function cyl(sty,cx,cz,r,h,y0,o,horiz,len){
+ const [f,e]=STY[sty]; const g=horiz?new THREE.CylinderGeometry(r,r,len,20):new THREE.CylinderGeometry(r,r,h,24);
+ const m=new THREE.Mesh(g,mkMat(f)); if(horiz){m.rotation.z=Math.PI/2; m.position.set(cx,(y0||0)+r,cz);} else m.position.set(cx,(y0||0)+h/2,cz);
+ if(e!=null) m.add(edges(g,e)); scene.add(m); track(m,o||{}); return m;
+}
+const V=(x,y,z)=>new THREE.Vector3(x,y,z);
+const isOn=o=>()=>true;
+
+function build(){
+ // ground & site
+ const grid=new THREE.GridHelper(700,70,0xe9e9e5,0xe9e9e5); grid.position.set(150,-0.02,122); grid.material.transparent=true; scene.add(grid); track(grid,{area:"ground",base:.6});
+ box("site",150,122,296,228,0.05,-0.05,{area:"ground",base:.62});
+ box("road",100,195,8,82,0.06,0,{area:"ground"});
+ box("road",168,155,136,8,0.06,0,{area:"ground"});
+ // fence (security)
+ [[150,8,296,0.15],[150,236,296,0.15]].forEach(a=>box("struct",a[0],a[1],a[2],a[3],2,0,{area:"yard",comp:"security",base:.7}));
+ [[2,122,0.15,228],[298,122,0.15,228]].forEach(a=>box("struct",a[0],a[1],a[2],a[3],2,0,{area:"yard",comp:"security",base:.7}));
+ box("struct",100,228,7,5,3.5,0,{area:"yard",comp:"security"}); ANCHOR.security=V(100,4,228);
+
+ // transmission line towers (outside site to the west)
+ [-58,-24,10].forEach(x=>{cyl("equip",x,52,0.6,22,0,{area:"yard",comp:"grid"});box("equip",x,52,0.6,9,0.5,19.5,{area:"yard",comp:"grid"});});
+ ANCHOR.grid=V(-24,23,52);
+ // substation
+ box("pad",45,52,60,54,0.3,0,{area:"yard",comp:"substation"});
+ box("power",34,40,7,6,6,0.3,{area:"yard",comp:"substation"}); box("power",52,40,7,6,6,0.3,{area:"yard",comp:"substation"});
+ box("struct",45,66,16,8,5,0.3,{area:"yard",comp:"substation"});
+ [[28,30],[28,50],[62,30],[62,50]].forEach(p=>cyl("equip",p[0],p[1],0.25,9,0.3,{area:"yard",comp:"substation"}));
+ ANCHOR.substation=V(43,8,40);
+ // BESS
+ box("pad",45,104,60,22,0.3,0,{area:"yard",comp:"bess"});
+ [[26,99],[42,99],[58,99],[26,109],[42,109],[58,109]].forEach(p=>box("batt",p[0],p[1],12.2,2.9,2.6,0.3,{area:"yard",comp:"bess"}));
+ ANCHOR.bess=V(42,4,104);
+
+ // generator yard: row A (8) + row B (8 for 2N, 1 spare for N+1)
+ box("pad",170,34,124,32,0.3,0,{area:"yard",comp:"gens"});
+ for(let i=0;i<8;i++) box("power",119+i*14.6,26,12,4,3.8,0.3,{area:"yard",comp:"gens"});
+ for(let i=0;i<8;i++){const spare=i===0; box(spare?"spare":"power",119+i*14.6,41,12,4,3.8,0.3,{area:"yard",comp:"gens",cond:spare?(()=>true):(()=>S.red==="2N"),spareN1:spare});}
+ ANCHOR.gens=V(170,6,26);
+ // fuel tanks
+ box("pad",252,34,26,28,0.3,0,{area:"yard",comp:"fuel"});
+ cyl("equip",252,28,2.4,0,0.3,{area:"yard",comp:"fuel"},true,16); cyl("equip",252,40,2.4,0,0.3,{area:"yard",comp:"fuel"},true,16);
+ ANCHOR.fuel=V(252,6,34);
+
+ // ---------- main building x110..230, z60..150 ----------
+ box("struct",170,105,120,90,0.3,0,{area:"slab",comp:"bldg"});
+ // zone plates
+ box("zGrey",170,76.5,119,32.6,0.08,0.3,{area:"zone",comp:"greyZ"});
+ box("zWhite",170,111,119,35,0.08,0.3,{area:"zone",comp:"whiteZ"});
+ box("zSupport",170,139.5,119,21,0.08,0.3,{area:"zone",comp:"supportZ"});
+ ANCHOR.greyZ=V(170,3,64); ANCHOR.whiteZ=V(170,8,111); ANCHOR.supportZ=V(170,3,147);
+ // exterior walls with outward normals
+ const W=(cx,cz,w,d,n)=>box("shell",cx,cz,w,d,14,0.3,{area:"wall",walln:n,comp:"bldg"});
+ W(170,60,120,0.5,V(0,0,-1)); W(170,150,120,0.5,V(0,0,1)); W(110,105,0.5,90,V(-1,0,0)); W(230,105,0.5,90,V(1,0,0));
+ // roof + rooftop units
+ const roof=box("shell",170,105,121,91,0.7,14.3,{area:"roof",roof:true,comp:"bldg"});
+ [[130,80],[150,80],[190,80],[210,80]].forEach(p=>box("equip",p[0],p[1],8,5,2.2,15,{area:"roof",roof:true,comp:"bldg"}));
+ ANCHOR.bldg=V(170,18,105);
+ // partitions (ceiling 6.5 m)
+ const P=(cx,cz,w,d,area)=>box("part",cx,cz,w,d,6.5,0.38,{area:area||"part",base:.55});
+ P(170,93,119,0.25); P(170,129,119,0.25); P(170,76.5,0.25,32.6,"part"); P(170,111,0.25,35,"part");
+ P(141,139.5,0.2,20); P(156,139.5,0.2,20); P(174,139.5,0.2,20);
+
+ // ---------- Electrical room A (x110..170) and B (x170..230) ----------
+ const elec=(dx,side)=>{
+  const area=side==="A"?"elecA":"elecB"; const on=side==="A"?(()=>true):(()=>S.red==="2N");
+  box("power",120+dx,65,12,1.6,2.4,0.38,{area,comp:"mvsg",cond:on});
+  box("power",130+dx,65.5,3.4,2.8,3,0.38,{area,comp:"xfmr",cond:()=>on()&&!S.vdc}); box("power",134.6+dx,65.5,3.4,2.8,3,0.38,{area,comp:"xfmr",cond:()=>on()&&!S.vdc});
+  box("equip",140.2+dx,65,2.2,1.4,2.4,0.38,{area,comp:"ats",cond:on});
+  box("equip",150+dx,65,12,1.4,2.4,0.38,{area,comp:"lvsg",cond:()=>on()&&!S.vdc});
+  box("power",146.8+dx,65.6,9,2.6,2.8,0.38,{area,comp:"rect",cond:()=>on()&&S.vdc});
+  box("power",132.5+dx,65.6,7,2.6,2.8,0.38,{area,comp:"rect",cond:()=>on()&&S.vdc});
+  // UPS modules: 5 per side (+1 spare on A when N+1)
+  for(let i=0;i<6;i++){const spare=i===5; box(spare?"spare":"power",118+dx+i*3.3,75,2.4,1.2,2.2,0.38,{area,comp:"ups",
+    cond:()=>on()&&!S.vdc&&(spare?(side==="A"&&S.red==="N+1"):true)});}
+  // battery room: racks
+  for(let i=0;i<5;i++) box("batt",145+dx+i*4.2,81,1.1,14,2,0.38,{area,comp:"batt",alias:true,cond:on});
+ };
+ elec(0,"A"); elec(60,"B");
+ // reserved B-room marker (N+1)
+ box("glass",200,76.5,56,30,0.1,0.45,{area:"elecB",comp:"bside",cond:()=>S.red==="N+1",base:.9});
+ ANCHOR.mvsg=V(120,3.4,65); ANCHOR.xfmr=V(132,4,65.5); ANCHOR.ats=V(140.2,3.4,65); ANCHOR.lvsg=V(150,3.4,65);
+ ANCHOR.rect=V(146.8,4.2,65.6); ANCHOR.ups=V(126,3.2,75); ANCHOR.batt=V(153,3,81); ANCHOR.dcstore=V(153,3,81); ANCHOR.bside=V(200,2,76.5);
+
+ // ---------- Data halls A (x110..170) and B (x170..230), z 93..129 ----------
+ const rackGeo=new THREE.BoxGeometry(0.6,2.3,1.2);
+ const rackMat=new THREE.MeshLambertMaterial({color:0xffffff,map:eTex("netrack","side"),transparent:true,opacity:1,emissive:0x000000});
+ const RACKS=[];
+ [0,60].forEach(dx=>{for(let p=0;p<4;p++){const z0=98+p*7.4; [z0,z0+2.6].forEach(z=>{for(let i=0;i<38;i++) RACKS.push([129.2+dx+i*0.6,z]);});}});
+ const rackIM=new THREE.InstancedMesh(rackGeo,rackMat,RACKS.length);
+ const mtx=new THREE.Matrix4(); RACKS.forEach((r,i)=>{mtx.makeTranslation(r[0],0.38+1.15,r[1]);rackIM.setMatrixAt(i,mtx);});
+ scene.add(rackIM); track(rackIM,{area:"hall",comp:"rack"});
+ { // merged outlines for every rack, plus a front status strip
+  const eg=new THREE.EdgesGeometry(rackGeo); const ev=eg.attributes.position.array; const all=new Float32Array(ev.length*RACKS.length);
+  RACKS.forEach((r,i)=>{for(let k=0;k<ev.length;k+=3){all[i*ev.length+k]=ev[k]+r[0]; all[i*ev.length+k+1]=ev[k+1]+0.38+1.15; all[i*ev.length+k+2]=ev[k+2]+r[1];}});
+  const lg=new THREE.BufferGeometry(); lg.setAttribute("position",new THREE.BufferAttribute(all,3));
+  const rl=new THREE.LineSegments(lg,new THREE.LineBasicMaterial({color:0x2a2a2a,transparent:true,opacity:1})); scene.add(rl); track(rl,{area:"hall"});
+
+ }
+ window.RACK_COUNT=RACKS.length;
+ ANCHOR.rack=V(140,3,99);
+ [0,60].forEach(dx=>{
+  const area=dx?"hallB":"hallA";
+  for(let p=0;p<4;p++){const z0=98+p*7.4, zc=z0+1.3;
+   // CDUs (liquid)
+   box("cold",126.6+dx,zc,1.2,3.8,2.2,0.38,{area,comp:"cdu",cond:()=>S.liquid}); box("cold",154.4+dx,zc,1.2,3.8,2.2,0.38,{area,comp:"cdu",cond:()=>S.liquid});
+   // containment (air)
+   box("heat",140.5+dx,zc,22.8,1.4,0.08,2.7,{area,comp:"contain",cond:()=>!S.liquid,base:.85});
+   // busway over each row
+   box("power",140.5+dx,z0,22.8,0.3,0.3,3.3,{area,comp:"busway"}); box("power",140.5+dx,z0+2.6,22.8,0.3,0.3,3.3,{area,comp:"busway"});
+  }
+  // CRAH along hall side walls (air)
+  for(let k=0;k<6;k++){box("cold",112.4+dx,96+k*5.6,1.2,2.6,2.6,0.38,{area,comp:"crah",cond:()=>!S.liquid}); box("cold",167.6+dx,96+k*5.6,1.2,2.6,2.6,0.38,{area,comp:"crah",cond:()=>!S.liquid});}
+  // structure tint
+  box("struct2",140.5+dx,111,54,33,0.06,0.39,{area,comp:"slab",cond:()=>S.layers.struct,base:.85});
+ });
+ // network racks: MDA (hall A), HDA (hall B)
+ for(let i=0;i<5;i++) box("net",160.5+i*0.62,126.2,0.6,1.2,2.3,0.38,{area:"hallA",comp:"mda"});
+ for(let i=0;i<4;i++) box("net",220.5+i*0.62,126.2,0.6,1.2,2.3,0.38,{area:"hallB",comp:"hda"});
+ ANCHOR.cdu=V(154.4,2.8,99.3); ANCHOR.crah=V(112.4,3,101.6); ANCHOR.contain=V(140.5,3.2,113.6); ANCHOR.busway=V(150,3.8,106);
+ ANCHOR.mda=V(161.7,3,126.2); ANCHOR.hda=V(221.4,3,126.2); ANCHOR.vesda=V(186,6.2,96); ANCHOR.slab=V(196,0.6,121);
+
+ // ---------- Support space z 129..150 ----------
+ for(let i=0;i<3;i++) box("net",119+i*5,140,3.6,1.2,0.9,0.38,{area:"support",comp:"noc"});
+ box("dark",127,145,14,0.2,2.4,0.38,{area:"support",comp:"noc"});
+ for(let i=0;i<4;i++) box("net",145+i*1.2,138,0.6,1.2,2.3,0.38,{area:"support",comp:"mmr"});
+ box("zSupport",201,139.5,54,19,0.05,0.42,{area:"support",comp:"dock"});
+ [[186,136],[192,136],[198,136],[186,142],[192,142]].forEach(p=>box("dark",p[0],p[1],1.0,1.6,2.5,0.42,{area:"support",comp:"dock"}));
+ [[208,149.6],[216,149.6],[224,149.6]].forEach(p=>box("equip",p[0],p[1],4.5,0.4,5,0.3,{area:"support",comp:"dock"}));
+ ANCHOR.noc=V(124,2.5,141); ANCHOR.mmr=V(146.8,3,138); ANCHOR.dock=V(205,3,140);
+
+ // ---------- Central utility plant (CUP) x240..276, z60..104 ----------
+ box("struct",258,82,36,44,0.3,0,{area:"cupSlab",comp:"chiller"});
+ const CW=(cx,cz,w,d,n)=>box("shell",cx,cz,w,d,9,0.3,{area:"wall",walln:n});
+ CW(258,60,36,0.5,V(0,0,-1)); CW(258,104,36,0.5,V(0,0,1)); CW(240,82,0.5,44,V(-1,0,0)); CW(276,82,0.5,44,V(1,0,0));
+ box("shell",258,82,37,45,0.6,9.3,{area:"roof",roof:true});
+ [[249,70],[267,70],[249,85],[267,85]].forEach(p=>box("cold",p[0],p[1],10,3.6,3.2,0.3,{area:"cup",comp:"chiller"}));
+ for(let i=0;i<6;i++) cyl("equip",245+i*5,97,0.8,1.6,0.3,{area:"cup",comp:"fws"});
+ ANCHOR.chiller=V(249,4.5,70); ANCHOR.fws=V(257,3,97);
+ // heat rejection pad x238..292, z110..150
+ box("pad",265,131,54,40,0.3,0,{area:"heatrej",comp:"heatrej"});
+ [[249,119],[260,119],[271,119],[249,131],[260,131],[271,131]].forEach(p=>{box("cold",p[0],p[1],10,10,8,0.3,{area:"heatrej",comp:"heatrej",cond:()=>S.evap});cyl("equip",p[0],p[1],3.2,1.2,8.3,{area:"heatrej",comp:"heatrej",cond:()=>S.evap});});
+ [[255,115],[255,122],[255,129],[255,136],[255,143],[278,115],[278,122],[278,129],[278,136],[278,143]].forEach(p=>box("cold",p[0],p[1],18,4.4,3.2,0.3,{area:"heatrej",comp:"heatrej",cond:()=>!S.evap}));
+ ANCHOR.heatrej=V(260,11,125);
+ // water
+ box("pad",268,176,40,20,0.3,0,{area:"yard",comp:"water"});
+ cyl("water",258,176,6.5,12,0.3,{area:"yard",comp:"water"}); box("water",277,176,8,6,4,0.3,{area:"yard",comp:"water"});
+ ANCHOR.water=V(258,13,176);
+ // fiber vaults
+ box("net",143,232,2.4,2.4,0.6,0,{area:"yard",comp:"fiber"}); box("net",-8,140,2.4,2.4,0.6,0,{area:"yard",comp:"fiber"});
+ ANCHOR.fiber=V(-8,2,140);
+ // expansion (phase 1 outline / phase 2 building)
+ box("glass",170,192,120,48,0.06,0.02,{area:"yard",comp:"expansion",cond:()=>S.phase===1,base:.85});
+ box("shell",170,192,120,48,14,0.3,{area:"yard",comp:"expansion",cond:()=>S.phase===2});
+ for(let i=0;i<8;i++) box("power",119+i*14.6,214,12,4,3.8,0.3,{area:"yard",comp:"gens",cond:()=>S.phase===2});
+ ANCHOR.expansion=V(170,S.phase===2?16:2,192);
+ // zone anchors for L2
+ ANCHOR.yardZ=V(170,8,34);
+
+ // ---------- L4: AI rack, exploded (placed off-site) ----------
+ buildRack();
+}
+
+/* L4 rack model — illustrative tray mix and line-art detailing, not a bill of materials.
+   Orientation: front = +x (faces the camera), right side = +z, rear = -x. */
+const R0=V(-160,0,-120); const RACKPARTS=[];
+const RW=1.2, RD=0.62, RH=2.3;           // cabinet depth (x), width (z), height
+const TW=1.05, TD=0.56, TH=0.088;        // tray depth (x), width (z), height
+const INK="#3b3b38", SOFT="#9a9a95";
+function cvTex(w,h,draw){const c=document.createElement("canvas"); c.width=w; c.height=h; const g=c.getContext("2d");
+ g.fillStyle="#fbfbf9"; g.fillRect(0,0,w,h); g.strokeStyle=INK; g.lineWidth=2; g.lineJoin="round"; draw(g,w,h);
+ const t=new THREE.CanvasTexture(c); t.anisotropy=renderer?renderer.capabilities.getMaxAnisotropy():1; return t;}
+const rr=(g,x,y,w,h,r)=>{g.beginPath(); g.moveTo(x+r,y); g.arcTo(x+w,y,x+w,y+h,r); g.arcTo(x+w,y+h,x,y+h,r); g.arcTo(x,y+h,x,y,r); g.arcTo(x,y,x+w,y,r); g.closePath(); g.stroke();};
+const handle=(g,x,h)=>{rr(g,x,9,26,h-18,6);};
+const TEX={
+ cFront:()=>cvTex(640,64,(g,w,h)=>{g.lineWidth=4; g.strokeRect(3,3,w-6,h-6); handle(g,8,h); handle(g,w-34,h); g.lineWidth=3.5;
+   for(let k=0;k<4;k++){const x=52+k*92; rr(g,x,12,80,h-24,5); g.beginPath(); g.moveTo(x+12,h/2); g.lineTo(x+52,h/2); g.stroke(); g.beginPath(); g.arc(x+66,h/2,5,0,7); g.stroke();}
+   for(let k=0;k<9;k++){const x=432+k*16; g.beginPath(); g.moveTo(x,16); g.lineTo(x,h-16); g.stroke();}}),
+ sFront:()=>cvTex(640,64,(g,w,h)=>{g.lineWidth=4; g.strokeRect(3,3,w-6,h-6); handle(g,8,h); handle(g,w-34,h); g.lineWidth=3;
+   for(let r=0;r<2;r++) for(let k=0;k<16;k++){const x=50+k*33, y=12+r*22; g.strokeRect(x,y,24,16);}
+   for(let k=0;k<3;k++){g.beginPath(); g.arc(w-56-k*14,h/2,5,0,7); g.stroke();}}),
+ pFront:()=>cvTex(640,64,(g,w,h)=>{g.lineWidth=4; g.strokeRect(3,3,w-6,h-6);
+   for(let k=0;k<3;k++){const x=10+k*210; g.lineWidth=4; rr(g,x,7,200,h-14,6); g.lineWidth=3.5; g.beginPath(); g.arc(x+44,h/2,20,0,7); g.stroke();
+     g.beginPath(); g.moveTo(x+24,h/2); g.lineTo(x+64,h/2); g.moveTo(x+44,h/2-20); g.lineTo(x+44,h/2+20); g.stroke();
+     for(let v=0;v<5;v++){g.beginPath(); g.moveTo(x+86+v*14,16); g.lineTo(x+86+v*14,h-16); g.stroke();} rr(g,x+172,14,14,h-28,4);}}),
+ bFront:()=>cvTex(640,64,(g,w,h)=>{g.lineWidth=4; g.strokeRect(3,3,w-6,h-6);
+   for(let k=0;k<3;k++){const x=10+k*210; g.lineWidth=4; rr(g,x,7,200,h-14,6); g.lineWidth=3.5; g.strokeRect(x+18,18,58,28); g.strokeRect(x+76,26,7,12);
+     for(let q=0;q<4;q++){g.strokeRect(x+100+q*17,20,11,24);} rr(g,x+172,14,14,h-28,4);}}),
+ tSide:()=>cvTex(1024,64,(g,w,h)=>{g.lineWidth=4; g.strokeRect(3,3,w-6,h-6); g.lineWidth=3.5;
+   for(let grp=0;grp<3;grp++) for(let k=0;k<8;k++){const x=90+grp*300+k*22; rr(g,x,18,12,h-36,6);}}),
+ cTop:()=>cvTex(640,340,(g,w,h)=>{g.lineWidth=5; g.strokeRect(4,4,w-8,h-8); g.lineWidth=4;
+   [[150,40],[150,190],[400,40],[400,190]].forEach(([x,y])=>{rr(g,x,y,170,110,10); g.beginPath(); for(let q=0;q<4;q++){const yy=y+22+q*22; g.moveTo(x+24,yy); g.lineTo(x+146,yy);} g.stroke();});
+   g.lineWidth=6; g.beginPath(); g.moveTo(8,95); g.lineTo(150,95); g.moveTo(320,95); g.lineTo(400,95); g.stroke();
+   g.beginPath(); g.moveTo(8,245); g.lineTo(150,245); g.moveTo(320,245); g.lineTo(400,245); g.stroke();}),
+ sTop:()=>cvTex(640,340,(g,w,h)=>{g.lineWidth=5; g.strokeRect(4,4,w-8,h-8); g.lineWidth=4; for(let k=0;k<2;k++){rr(g,170+k*190,90,150,150,10); g.strokeRect(205+k*190,125,80,80);}}),
+ pTop:()=>cvTex(640,340,(g,w,h)=>{g.lineWidth=5; g.strokeRect(4,4,w-8,h-8); g.lineWidth=4; for(let k=0;k<3;k++){g.strokeRect(20,16+k*108,w-40,92); g.beginPath(); g.arc(w-80,62+k*108,30,0,7); g.stroke();}}),
+ bTop:()=>cvTex(640,340,(g,w,h)=>{g.lineWidth=5; g.strokeRect(4,4,w-8,h-8); g.lineWidth=4; for(let r=0;r<4;r++) for(let k=0;k<8;k++){g.beginPath(); g.arc(60+k*74,50+r*78,24,0,7); g.stroke();}}),
+ side:()=>cvTex(400,760,(g,w,h)=>{g.lineWidth=6; g.strokeRect(6,6,w-12,h-12); g.lineWidth=4; g.strokeRect(26,26,w-52,h-52);
+   for(let r=0;r<8;r++){const y=60+r*24; rr(g,70,y,w-140,10,5);}
+   for(let r=0;r<8;r++){const y=h-260+r*24; rr(g,70,y,w-140,10,5);}}),
+ plinth:()=>cvTex(640,56,(g,w,h)=>{g.lineWidth=4; g.strokeRect(3,3,w-6,h-6); g.lineWidth=3.5; for(let k=0;k<34;k++){const x=24+k*17.5; g.beginPath(); g.moveTo(x,12); g.lineTo(x,h-12); g.stroke();}})
+};
+function trayMesh(kind,cx,cz){
+ const front={ctray:TEX.cFront,stray:TEX.sFront,pshelf:TEX.pFront,bbu:TEX.bFront}[kind]();
+ const top={ctray:TEX.cTop,stray:TEX.sTop,pshelf:TEX.pTop,bbu:TEX.bTop}[kind]();
+ const plain=()=>new THREE.MeshLambertMaterial({color:0xf7f7f5,transparent:true});
+ const mats=[new THREE.MeshLambertMaterial({map:front,transparent:true}),plain(),new THREE.MeshLambertMaterial({map:top,transparent:true}),plain(),new THREE.MeshLambertMaterial({map:TEX.tSide(),transparent:true}),plain()];
+ const g=new THREE.BoxGeometry(TW,TH,TD); const m=new THREE.Mesh(g,mats); m.position.set(cx,TH/2,cz);
+ const e=new THREE.LineSegments(new THREE.EdgesGeometry(g),new THREE.LineBasicMaterial({color:0x2a2a2a,transparent:true})); m.add(e);
+ scene.add(m); track(m,{area:"rack4",comp:kind}); return m;
+}
+function buildRack(){
+ const seq=["pshelf","pshelf","ctray","ctray","ctray","ctray","ctray","stray","stray","stray","ctray","ctray","ctray","ctray","ctray","pshelf","pshelf","bbu","bbu"];
+ seq.slice().reverse().forEach((k,i)=>{const m=trayMesh(k,R0.x,R0.z); RACKPARTS.push({m,i,k});});
+ // cabinet frame
+ const fg=new THREE.BoxGeometry(RW,RH,RD); const frame=new THREE.LineSegments(new THREE.EdgesGeometry(fg),new THREE.LineBasicMaterial({color:0x161616,transparent:true}));
+ frame.position.set(R0.x,RH/2+0.1,R0.z); scene.add(frame); track(frame,{area:"rack4"});
+ // vertical rails at the front
+ [-1,1].forEach(sz=>{const rg=new THREE.BoxGeometry(0.03,RH,0.03); const rm=new THREE.Mesh(rg,new THREE.MeshLambertMaterial({color:0xefefec,transparent:true})); rm.position.set(R0.x+RW/2-0.04,RH/2+0.1,R0.z+sz*(RD/2-0.03)); rm.add(new THREE.LineSegments(new THREE.EdgesGeometry(rg),new THREE.LineBasicMaterial({color:0x2a2a2a,transparent:true}))); scene.add(rm); track(rm,{area:"rack4"});});
+ // louvred side panel (+z) and roof — shown when collapsed
+ const sp=new THREE.Mesh(new THREE.PlaneGeometry(RW,RH),new THREE.MeshLambertMaterial({map:TEX.side(),transparent:true,side:THREE.DoubleSide}));
+ sp.position.set(R0.x,RH/2+0.1,R0.z+RD/2+0.002); scene.add(sp); track(sp,{area:"rack4",cond:()=>!S.explode});
+ const roofG=new THREE.BoxGeometry(RW,0.04,RD); const roof=new THREE.Mesh(roofG,new THREE.MeshLambertMaterial({color:0xf7f7f5,transparent:true}));
+ roof.position.set(R0.x,RH+0.12,R0.z); roof.add(new THREE.LineSegments(new THREE.EdgesGeometry(roofG),new THREE.LineBasicMaterial({color:0x2a2a2a,transparent:true}))); scene.add(roof); track(roof,{area:"rack4",cond:()=>!S.explode});
+ // plinth with grille
+ const pg=new THREE.BoxGeometry(RW,0.1,RD); const pm=new THREE.Mesh(pg,[new THREE.MeshLambertMaterial({map:TEX.plinth(),transparent:true}),...Array(5).fill(0).map(()=>new THREE.MeshLambertMaterial({color:0xf3f3f1,transparent:true}))]);
+ pm.position.set(R0.x,0.05,R0.z); pm.add(new THREE.LineSegments(new THREE.EdgesGeometry(pg),new THREE.LineBasicMaterial({color:0x2a2a2a,transparent:true}))); scene.add(pm); track(pm,{area:"rack4"});
+ // cold plates on compute trays (raised blocks, picked as "coldplate")
+ RACKPARTS.filter(p=>p.k==="ctray").forEach(p=>{[-0.12,0.12].forEach(dz=>{const cg=new THREE.BoxGeometry(0.26,0.014,0.16); const c=new THREE.Mesh(cg,new THREE.MeshLambertMaterial({color:0xfbfbf9,transparent:true}));
+   c.add(new THREE.LineSegments(new THREE.EdgesGeometry(cg),new THREE.LineBasicMaterial({color:0x2a2a2a,transparent:true}))); c.position.set(R0.x+0.05,0,R0.z+dz); scene.add(c); track(c,{area:"rack4",comp:"coldplate"}); RACKPARTS.push({m:c,i:p.i,k:"cp",dy:TH});});});
+ // rear manifolds (drawn on the rear-right corner so they stay visible) + hoses to each compute tray
+ const MX=R0.x-RW/2+0.06;
+ [[R0.z+RD/2+0.05,"cold"],[R0.z+RD/2+0.12,"heat"]].forEach(([z,sty])=>{const cg=new THREE.CylinderGeometry(0.03,0.03,RH,16); const c=new THREE.Mesh(cg,new THREE.MeshLambertMaterial({color:0xfbfbf9,transparent:true}));
+   c.add(new THREE.LineSegments(new THREE.EdgesGeometry(cg,30),new THREE.LineBasicMaterial({color:0x2a2a2a,transparent:true}))); c.position.set(MX,RH/2+0.1,z); scene.add(c); track(c,{area:"rack4",comp:"manifold"});});
+ HOSES.geo=new THREE.BufferGeometry(); HOSES.line=new THREE.LineSegments(HOSES.geo,new THREE.LineBasicMaterial({color:0x6b6b67,transparent:true})); scene.add(HOSES.line); track(HOSES.line,{area:"rack4"});
+ // network: rear NVLink copper spine + front scale-out fibre bundle (neutral ink; colour only on the system-layer path)
+ const bundle=(x,z,y0,y1,r,comp)=>{const g=new THREE.CylinderGeometry(r,r,y1-y0,12); const c=new THREE.Mesh(g,new THREE.MeshLambertMaterial({color:0xf3f3f1,transparent:true}));
+   c.add(new THREE.LineSegments(new THREE.EdgesGeometry(g,30),new THREE.LineBasicMaterial({color:0x2a2a2a,transparent:true}))); c.position.set(x,(y0+y1)/2,z); scene.add(c); track(c,{area:"rack4",comp});};
+ bundle(NVX,NVZ,0.35,2.2,0.022,"nvlink");
+ bundle(FOX,FOZ,0.4,RH+0.45,0.026,"nic");
+ NETC.geo=new THREE.BufferGeometry(); NETC.line=new THREE.LineSegments(NETC.geo,new THREE.LineBasicMaterial({color:0x55554f,transparent:true})); scene.add(NETC.line); track(NETC.line,{area:"rack4"});
+ RACKPARTS.forEach(p=>{p.bx=p.m.position.x;});
+ layoutRack(true);
+}
+const HOSES={}, NETC={};
+const NVX=R0.x-RW/2-0.005, NVZ=R0.z+RD/2-0.05;      // NVLink spine: rear corner
+const FOX=R0.x+RW/2+0.05,  FOZ=R0.z-RD/2+0.07;      // scale-out fibre riser: front corner
+const PULLIDX={ctray:14,coldplate:14,stray:9,pshelf:17,bbu:1}, PX=0.5;
+function cableVerts(){const v=[];
+ RACKPARTS.forEach(p=>{const x=p.m.position.x, y=p.m.position.y;
+  if(p.k==="ctray"||p.k==="stray"){ v.push(x-TW/2,y,R0.z+0.2, NVX,y,NVZ); }
+  if(p.k==="ctray"){ v.push(x+TW/2,y+0.01,R0.z-0.16, FOX,y+0.03,FOZ); v.push(x+TW/2,y-0.01,R0.z-0.20, FOX,y+0.01,FOZ); }});
+ NETC.geo.setAttribute("position",new THREE.Float32BufferAttribute(v,3)); NETC.geo.computeBoundingSphere();}
+function rackY(i,ex){return 0.12+i*(ex?0.16:0.115);}
+function layoutRack(ex){
+ const pi=S.pull?PULLIDX[S.pull]:-1;
+ RACKPARTS.forEach(p=>{const y=rackY(p.i,ex); p.ty=y+(p.dy?p.dy+0.007:TH/2); p.tx=(p.bx??p.m.position.x)+(p.i===pi?PX:0);});
+ const ox=k=>S.pull===k?PX:0;
+ ANCHOR.ctray=V(R0.x+TW/2+ox("ctray"),rackY(14,ex)+TH,R0.z-0.1); ANCHOR.stray=V(R0.x+TW/2+ox("stray"),rackY(9,ex)+TH,R0.z-0.1);
+ ANCHOR.pshelf=V(R0.x+TW/2+ox("pshelf"),rackY(17,ex)+TH,R0.z-0.1); ANCHOR.bbu=V(R0.x+TW/2+ox("bbu"),rackY(1,ex)+TH,R0.z-0.1);
+ ANCHOR.coldplate=S.pull==="coldplate"?V(R0.x+0.05+PX,rackY(14,ex)+TH+0.02,R0.z+0.12):V(R0.x+0.05,rackY(12,ex)+TH+0.02,R0.z+0.12);
+ ANCHOR.nvlink=V(NVX,rackY(8,ex),NVZ); ANCHOR.nic=V(FOX,RH+0.3,FOZ);
+ ANCHOR.manifold=V(R0.x-RW/2+0.06,RH+0.15,R0.z+RD/2+0.09);
+ if(HOSES.geo){const v=[]; RACKPARTS.filter(p=>p.k==="ctray").forEach(p=>{const y=p.ty;
+   v.push(R0.x-TW/2,y,R0.z+0.2, R0.x-RW/2+0.06,y,R0.z+RD/2+0.05, R0.x-TW/2,y-0.02,R0.z+0.24, R0.x-RW/2+0.06,y-0.02,R0.z+RD/2+0.12);});
+  HOSES.geo.setAttribute("position",new THREE.Float32BufferAttribute(v,3)); HOSES.geo.attributes.position.needsUpdate=true; HOSES.geo.computeBoundingSphere();}
+}
+
+/* ============================================================
+   PATHS (SVG overlay) — world-space polylines, projected each frame
+   ============================================================ */
+const PATHS=[
+ // power
+ {id:"util",ly:"power",cls:"util",pts:[[-58,21,52],[-24,21,52],[10,21,52],[34,6.3,40],[45,0.4,62],[110,0.4,63],[120,1.8,65]]},
+ {id:"utilB",ly:"power",cls:"util",cond:()=>S.red==="2N",pts:[[110,0.4,63],[176,0.4,63],[180,1.8,65]]},
+ {id:"bess",ly:"power",cls:"util",pts:[[42,2.9,104],[42,0.4,84],[34,3,43]]},
+ {id:"acA",ly:"power",cls:"crit",cond:()=>!S.vdc,pts:[[120,2.6,65],[130,2.6,65.5],[140.2,2.6,65],[150,2.6,65],[150,2.6,70],[126,2.6,73.5],[126,2.6,76],[126,4,92],[140.5,3.6,98]]},
+ {id:"acB",ly:"power",cls:"crit",cond:()=>!S.vdc&&S.red==="2N",pts:[[180,2.6,65],[190,2.6,65.5],[200.2,2.6,65],[210,2.6,65],[210,2.6,70],[186,2.6,73.5],[186,2.6,76],[186,4,92],[200.5,3.6,98]]},
+ {id:"acA2",ly:"power",cls:"crit",cond:()=>!S.vdc&&S.red==="2N",pts:[[186,4,92],[150,4,94],[140.5,3.6,100.6]]},
+ {id:"dcA",ly:"power",cls:"crit",cond:()=>S.vdc,pts:[[120,2.6,65],[132.5,3,65.6],[146.8,3,65.6],[146.8,3,72],[140,4,92],[140.5,3.6,98]]},
+ {id:"dcB",ly:"power",cls:"crit",cond:()=>S.vdc&&S.red==="2N",pts:[[180,2.6,65],[192.5,3,65.6],[206.8,3,65.6],[206.8,3,72],[200,4,92],[200.5,3.6,98]]},
+ {id:"battA",ly:"power",cls:"batt",cond:()=>!S.vdc,pts:[[147,2,81],[134,2,78],[129,2.2,76]]},
+ {id:"battB",ly:"power",cls:"batt",cond:()=>!S.vdc&&S.red==="2N",pts:[[207,2,81],[194,2,78],[189,2.2,76]]},
+ {id:"gen",ly:"power",cls:"gen",pts:[[170,4,26],[170,0.4,54],[140.2,0.4,58],[140.2,2.4,65]]},
+ {id:"genB",ly:"power",cls:"gen",cond:()=>S.red==="2N",pts:[[170,4,41],[200.2,0.4,54],[200.2,2.4,65]]},
+ {id:"rows",ly:"power",cls:"crit",pts:[[140.5,3.6,98],[140.5,3.6,100.6],[129.5,3.6,100.6]]},
+ // cooling: hot return (orange) and cold supply (teal)
+ {id:"hotL",ly:"heat",cls:"hot",cond:()=>S.liquid,pts:[[141,2,99.3],[154.4,2.4,99.3],[156,5.5,99],[214.4,5.5,99],[236,5.5,96],[249,3.4,85],[260,9,104],[260,10,119],[260,18,119]]},
+ {id:"hotA",ly:"heat",cls:"hot",cond:()=>!S.liquid,pts:[[141,2,99.3],[141,2.5,99.3],[167.6,2.6,99],[168,5.5,99],[236,5.5,96],[249,3.4,85],[260,9,104],[260,10,119],[260,18,119]]},
+ {id:"coldS",ly:"heat",cls:"cold",pts:[[249,2,70],[238,4.5,92],[200,4.5,95.5],[160,4.5,95.5],[154.4,2,98]]},
+ // water
+ {id:"wmain",ly:"water",cls:"water",pts:[[258,0.4,236],[258,6,182],[258,6,168],[262,3,150],[260,8.3,131]]},
+ {id:"wdom",ly:"water",cls:"waterD",pts:[[264,1,170],[232,1,148],[205,1,146]]},
+ // network
+ {id:"fibA",ly:"net",cls:"net",pts:[[143,0.3,232],[143,0.3,152],[146,1.5,140]]},
+ {id:"fibB",ly:"net",cls:"net",pts:[[-8,0.3,140],[110,0.3,140],[143,1.5,139]]},
+ {id:"core",ly:"net",cls:"net",pts:[[146,2.5,138],[150,3.4,131],[161.7,3,126.2],[200,3.4,127],[221.4,3,126.2]]},
+ {id:"core2",ly:"net",cls:"net",pts:[[161.7,3,126.2],[150,3.4,120],[140.5,3,113]]},
+ // fire: VESDA ceiling loops + battery compartments
+ {id:"vesA",ly:"fire",cls:"fire",pts:[[113,6.2,95],[167,6.2,95],[167,6.2,127],[113,6.2,127],[113,6.2,95]]},
+ {id:"vesB",ly:"fire",cls:"fire",pts:[[173,6.2,95],[227,6.2,95],[227,6.2,127],[173,6.2,127],[173,6.2,95]]},
+ {id:"fcA",ly:"fire",cls:"fire",pts:[[141,6.2,71],[166,6.2,71],[166,6.2,91],[141,6.2,91],[141,6.2,71]]},
+ {id:"fcB",ly:"fire",cls:"fire",cond:()=>S.red==="2N",pts:[[201,6.2,71],[226,6.2,71],[226,6.2,91],[201,6.2,91],[201,6.2,71]]},
+ {id:"fence",ly:"fire",cls:"fire",pts:[[2,2,8],[298,2,8],[298,2,236],[2,2,236],[2,2,8]]},
+ // rack (L4): supply up the cold manifold, return down the hot one
+ {id:"rkC",ly:"heat",cls:"cold",l4:true,pts:[[R0.x-0.54,0.1,R0.z+0.36],[R0.x-0.54,2.6,R0.z+0.36]]},
+ {id:"rkH",ly:"heat",cls:"hot",l4:true,pts:[[R0.x-0.54,2.6,R0.z+0.43],[R0.x-0.54,0.1,R0.z+0.43]]},
+ {id:"rkP",ly:"power",cls:"crit",l4:true,pts:[[R0.x-0.3,3.4,R0.z-0.2],[R0.x-0.3,2.55,R0.z-0.2]]},
+ {id:"rkNV",ly:"net",cls:"net",l4:true,pts:[[R0.x-RW/2-0.005,0.35,R0.z+RD/2-0.05],[R0.x-RW/2-0.005,2.2,R0.z+RD/2-0.05]]},
+ {id:"rkSO",ly:"net",cls:"net",l4:true,pts:[[R0.x+RW/2+0.05,0.4,R0.z-RD/2+0.07],[R0.x+RW/2+0.05,RH+0.45,R0.z-RD/2+0.07],[R0.x+RW/2+0.05,3.4,R0.z-RD/2-0.4]]}
+];
+const COLOR={util:"var(--power)",crit:"var(--power)",batt:"var(--batt)",gen:"var(--gen)",hot:"var(--heat)",cold:"var(--cold)",water:"var(--water)",waterD:"var(--water)",net:"var(--net)",fire:"var(--fire)"};
+const svg=$("paths"); const NS="http://www.w3.org/2000/svg";
+PATHS.forEach(p=>{
+ const g=document.createElementNS(NS,"g"); const b=document.createElementNS(NS,"polyline"); const f=document.createElementNS(NS,"polyline");
+ b.setAttribute("class","base"); f.setAttribute("class",p.cls==="fire"?"fire":"flow");
+ b.style.stroke=COLOR[p.cls]; f.style.stroke=COLOR[p.cls]; g.appendChild(b); g.appendChild(f); svg.appendChild(g);
+ p.g=g; p.b=b; p.f=f; p.v=p.pts.map(a=>V(a[0],a[1],a[2]));
+});
+const OVL=document.createElementNS(NS,"g"); svg.appendChild(OVL);
+function pathState(p){
+ // classes for the outage storyboard
+ const o=S.outage; if(o==null) return p.cls==="gen"?"idle":(p.cls==="batt"?"idle":"");
+ if(p.cls==="util") return (o===1||o===2||o===3)?"lost":"";
+ if(p.cls==="gen") return (o===2||o===3)?"":"idle";
+ if(p.cls==="batt") return (o===1||o===2)?"":(o===3?"slow":"idle");
+ return "";
+}
+
+/* ============================================================
+   LABELS
+   ============================================================ */
+const labelsEl=$("labels"); const LBL={};
+Object.keys(C).forEach(id=>{
+ const d=document.createElement("div"); d.className="lb"+(C[id].zone?" zone":""); d.dataset.id=id;
+ d.innerHTML="<span></span><i></i>"; d.addEventListener("click",e=>{e.stopPropagation();select(id,true);});
+ d.addEventListener("pointerenter",()=>{S.hover=id;}); d.addEventListener("pointerleave",()=>{if(S.hover===id) S.hover=null;});
+ labelsEl.appendChild(d); LBL[id]=d;
+});
+function compVisible(id){
+ const c=C[id]; if(!c) return false;
+ if(id==="xfmr"||id==="lvsg"||id==="ups"||id==="batt") if(S.vdc) return false;
+ if(id==="rect"||id==="dcstore") if(!S.vdc) return false;
+ if(id==="cdu") if(!S.liquid) return false;
+ if(id==="crah"||id==="contain") if(S.liquid) return false;
+ if(id==="bside") if(S.red!=="N+1") return false;
+ if(id==="slab") if(!S.layers.struct) return false;
+ if(id==="vesda") if(!S.layers.fire) return false;
+ return true;
+}
+function labelShown(id){
+ const c=C[id]; if(!compVisible(id)) return false;
+ if(!c.lv.includes(S.level)) return false;
+ if(S.level===3 && c.room && c.room!==S.room) return false;
+ if(S.level===3 && !c.room) return false;
+ return true;
+}
+function refreshLabelText(){
+ Object.keys(LBL).forEach(id=>{const c=C[id]; let n=c.n; LBL[id].firstChild.innerHTML=esc(T(n))+"<small>"+esc(T2(n))+"</small>"+(SH[id]?"<em class=\"sd\">"+esc(T(SH[id]))+"</em>":""); LBL[id]._w=0; LBL[id]._h=0;});
+}
+
+/* ============================================================
+   CAMERA
+   ============================================================ */
+const EL=Math.atan(1/Math.SQRT2); // true isometric elevation 35.26°
+const cam={target:V(150,0,122),size:300,az:Math.PI/4};
+let goal=null;
+const FRAMES={
+ 0:{t:[150,0,122],s:290},1:{t:[180,0,108],s:150},2:{t:[178,0,105],s:132},
+ elec:{t:[144,0,75],s:42},hall:{t:[168,0,111],s:60},cup:{t:[260,0,100],s:74},support:{t:[172,0,140],s:52},
+ 4:{t:[R0.x,1.75,R0.z],s:3.7}
+};
+function frameFor(){
+ if(S.level===3) return FRAMES[S.room]; return FRAMES[S.level];
+}
+function flyTo(t,s,az){goal={from:{t:cam.target.clone(),s:cam.size,az:cam.az},to:{t:t.clone(),s,az:az??cam.az},t0:performance.now(),dur:750};}
+function flyLevel(){const f=frameFor(); const sz=(f.s*fitScale()); flyTo(V(f.t[0],f.t[1],f.t[2]),sz);}
+function fitScale(){const r=stage.getBoundingClientRect(); const a=r.width/Math.max(1,r.height); return a<1.25?1.25/Math.max(.55,a):1;}
+function camDir(){return V(Math.cos(EL)*Math.cos(cam.az),Math.sin(EL),Math.cos(EL)*Math.sin(cam.az));}
+function applyCam(){
+ const r=stage.getBoundingClientRect(); const a=r.width/Math.max(1,r.height);
+ camera.left=-cam.size*a/2; camera.right=cam.size*a/2; camera.top=cam.size/2; camera.bottom=-cam.size/2;
+ const d=camDir(); camera.position.copy(cam.target).addScaledVector(d,1200); camera.lookAt(cam.target); camera.updateProjectionMatrix(); camera.updateMatrixWorld();
+}
+const ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+
+/* ============================================================
+   VISIBILITY / FADE RULES
+   ============================================================ */
+const ROOMAREA={elecA:"elec",elecB:"elec",hall:"hall",hallA:"hall",hallB:"hall",cup:"cup",cupSlab:"cup",heatrej:"cup",support:"support"};
+const INTERIOR=new Set(["elecA","elecB","hall","hallA","hallB","support","zone","part","cup"]);
+function goalOp(r){
+ if(r.cond && !r.cond()) return 0;
+ const a=r.area, L=S.level;
+ if(L===4) return a==="rack4"?1:0;
+ if(a==="rack4") return 0;
+ if(a==="ground") return 1;
+ if(L===0){ if(INTERIOR.has(a)) return 0; return 1; }
+ if(a==="roof") return L===1?0.42:0;
+ if(a==="wall"){ if(L===1){ return facing(r)?0:1; } return L===2?0.18:0.06; }
+ if(L===1) return 1;
+ if(L===2){ if(a==="zone") return 1; if(a==="part") return .55; if(INTERIOR.has(a)) return .32; if(a==="slab") return 1; return .3; }
+ // L3
+ const room=ROOMAREA[a];
+ if(room===S.room) return 1;
+ if(S.room==="cup" && a==="wall" ) return .06;
+ if(a==="zone"||a==="slab") return .35; if(a==="part") return .25;
+ return .07;
+}
+function facing(r){if(!r.walln) return false; const d=camDir(); return r.walln.x*d.x+r.walln.z*d.z>0.05;}
+function roofLift(r){return (S.level===1&&r.roof)?46:0;}
+
+/* ============================================================
+   RENDER LOOP
+   ============================================================ */
+const raycaster=new THREE.Raycaster(); const tmp=V(0,0,0);
+function resize(){
+ const r=stage.getBoundingClientRect(); if(!renderer) return;
+ renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2)); renderer.setSize(r.width,r.height,false);
+ svg.setAttribute("viewBox",`0 0 ${r.width} ${r.height}`);
+}
+function project(v,w,h){tmp.copy(v).project(camera); return [(tmp.x+1)/2*w,(1-tmp.y)/2*h,tmp.z];}
+let lastT=performance.now();
+function tick(now){
+ const dt=Math.min(64,now-lastT); lastT=now;
+ if(goal){const k=Math.min(1,(now-goal.t0)/goal.dur), e=ease(k);
+  cam.target.lerpVectors(goal.from.t,goal.to.t,e); cam.size=goal.from.s+(goal.to.s-goal.from.s)*e; cam.az=goal.from.az+(goal.to.az-goal.from.az)*e; if(k>=1) goal=null;}
+ applyCam();
+ const kf=1-Math.pow(0.0008,dt/1000*3);
+ OBJ.forEach(r=>{
+  const g=goalOp(r)*r.base; r.op+=(g-r.op)*Math.min(1,kf*1.6); if(Math.abs(g-r.op)<0.004) r.op=g;
+  const o=r.obj; o.visible=r.op>0.01;
+  if(o.material){const ms=Array.isArray(o.material)?o.material:[o.material]; for(const mm of ms){mm.opacity=r.op; mm.depthWrite=r.op>0.95;}}
+  for(const ch of o.children){ if(ch.material) ch.material.opacity=Math.min(1,r.op*1.05); }
+  if(r.roof){const base=r.roofBaseY??(r.roofBaseY=o.position.y); const ty=base+roofLift(r); o.position.y+=(ty-o.position.y)*Math.min(1,kf*1.4);}
+ });
+ RACKPARTS.forEach(p=>{p.m.position.y+=(p.ty-p.m.position.y)*Math.min(1,kf*1.4); if(p.tx!=null) p.m.position.x+=(p.tx-p.m.position.x)*Math.min(1,kf*1.2);});
+ if(S.level===4&&NETC.geo) cableVerts();
+ if(S.level===4&&HOSES.geo){const v=[]; RACKPARTS.filter(p=>p.k==="ctray").forEach(p=>{const y=p.m.position.y, x=p.m.position.x; v.push(x-TW/2,y,R0.z+0.2, R0.x-RW/2+0.06,y,R0.z+RD/2+0.05, x-TW/2,y-0.02,R0.z+0.24, R0.x-RW/2+0.06,y-0.02,R0.z+RD/2+0.12);}); HOSES.geo.setAttribute("position",new THREE.Float32BufferAttribute(v,3)); HOSES.geo.computeBoundingSphere();}
+ const blink=(Math.floor(now/450)%2)===0;
+
+ if(renderer) renderer.render(scene,camera);
+ drawOverlay();
+ requestAnimationFrame(tick);
+}
+function drawOverlay(){
+ const r=stage.getBoundingClientRect(), w=r.width, h=r.height;
+ PATHS.forEach(p=>{
+  let show=S.layers[p.ly] && (!p.cond||p.cond());
+  if(S.level===4) show=show&&!!p.l4; else show=show&&!p.l4;
+  if(p.cls==="fire" && p.id!=="fence" && S.level===0) show=false;
+  p.g.style.display=show?"":"none"; if(!show) return;
+  const pts=p.v.map(v=>project(v,w,h)).map(a=>a[0].toFixed(1)+","+a[1].toFixed(1)).join(" ");
+  p.b.setAttribute("points",pts); p.f.setAttribute("points",pts);
+  const st=pathState(p); p.f.setAttribute("class",(p.cls==="fire"?"fire":"flow")+(st?" "+st:"")+((p.cls==="water"&&!S.evap)?" slow":""));
+  p.b.style.display=st==="lost"?"none":"";
+ });
+ const hot=hotSet(); const vis=[];
+ Object.keys(LBL).forEach(id=>{
+  const el=LBL[id]; const an=ANCHOR[id]; const show=an&&(labelShown(id)||(S.hover===id&&compVisible(id)&&S.level!==4));
+  if(!show){el.style.display="none";return;}
+  const [x,y,z]=project(an,w,h); if(z>1||x<-40||x>w+40||y<-20||y>h+40){el.style.display="none";return;}
+  el.style.display=""; vis.push({id,el,x,y});
+  el.classList.toggle("sel",S.sel===id); el.classList.toggle("hot",hot.has(id)); el.classList.toggle("hov",S.hover===id);
+ });
+ let lead="";
+ const side=S.level===4&&w>=760;
+ if(side){
+  const cols={L:[],R:[]}; vis.forEach(v=>cols[SIDE[v.id]||"R"].push(v));
+  ["L","R"].forEach(sd=>{const arr=cols[sd].sort((a,b)=>a.y-b.y); let last=-1e9; const bw=Math.min(250,w*0.25);
+   // stack top-down, then push back up from the bottom so no box runs off the stage
+   arr.forEach(v=>{ if(!v.el.classList.contains("side")){v.el.classList.add("side"); v.el._h=0;} v.el.style.width=bw+"px"; v._bh=v.el._h||(v.el._h=v.el.offsetHeight||52); v._top=Math.max(v.y-14,last+12); last=v._top+v._bh;});
+   let floor=h-38; for(let i=arr.length-1;i>=0;i--){const v=arr[i]; v._top=Math.min(v._top,floor-v._bh); floor=v._top-12;}
+   arr.forEach(v=>{ const top=v._top;
+    const left=sd==="L"?28:w-28-bw-(w>700?52:0); v.el.style.left=left+"px"; v.el.style.top=top+"px";
+    const ex=sd==="L"?left+bw+10:left-10, ey=top+10, mx=sd==="L"?Math.max(ex+16,v.x-34):Math.min(ex-16,v.x+34);
+    lead+=`<polyline class="leader" points="${ex.toFixed(1)},${ey.toFixed(1)} ${mx.toFixed(1)},${ey.toFixed(1)} ${v.x.toFixed(1)},${v.y.toFixed(1)}"/><circle class="ldot" cx="${v.x.toFixed(1)}" cy="${v.y.toFixed(1)}" r="1.8"/>`;
+   });});
+ } else {
+  vis.forEach(v=>{ if(v.el.classList.contains("side")){v.el.classList.remove("side"); v.el.style.width=""; v.el._w=0; v.el._h=0;} });
+  vis.sort((a,b)=>b.y-a.y); const placed=[];
+  vis.forEach(v=>{
+   const sp=v.el.firstChild; const bw=v.el._w||(v.el._w=sp.offsetWidth||80), bh=v.el._h||(v.el._h=sp.offsetHeight||28);
+   let lift=0;
+   for(let it=0;it<10;it++){const bot=v.y-12-lift, top=bot-bh, l=v.x-bw/2-3, r=v.x+bw/2+3;
+    const hit=placed.find(p=>l<p.r&&r>p.l&&top<p.b&&bot>p.t); if(!hit) break; lift+=bot-hit.t+4;}
+   placed.push({l:v.x-bw/2-4,r:v.x+bw/2+4,t:v.y-12-lift-bh-3,b:v.y-12-lift+3});
+   v.el.style.left=v.x+"px"; v.el.style.top=v.y+"px"; v.el.style.setProperty("--lead",(12+lift)+"px");
+  });
+ }
+ if(S.sel&&ANCHOR[S.sel]&&compVisible(S.sel)&&!(S.level===4&&side)){
+  const [x,y,z]=project(ANCHOR[S.sel],w,h); if(z<=1) lead+=`<circle class="ring" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="26"/><circle class="core" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.5"/>`;
+ }
+ OVL.innerHTML=lead;
+ // emissive pulse on hot comps
+ const pulse=(Math.sin(performance.now()/260)+1)/2;
+ Object.keys(COMPMESH).forEach(id=>{const on=hot.has(id)||S.sel===id; COMPMESH[id].forEach(m=>{if(!m.material) return; const ms=Array.isArray(m.material)?m.material:[m.material]; const hh=hot.has(id); for(const mm of ms){ if(mm.emissive) mm.emissive.setRGB(hh?0.32*pulse:0, hh?0.05*pulse:0, hh?0.02*pulse:0);} });});
+}
+function ledState(c){
+ const o=S.outage;
+ if(o!=null){
+  if(c==="gens") return (o===2||o===3)?"ok":(o===1?"warn":"off");
+  if(c==="mvsg"||c==="xfmr"||c==="rect") return (o>=1&&o<=3)?"off":"ok";
+  if(c==="lvsg") return (o===1||o===2)?"off":"ok";
+  if(c==="ups") return (o===1||o===2)?"warn":"ok";
+  if(c==="ats") return o===2?"warn":"ok";
+  if(c==="bess") return (o>=1&&o<=3)?"warn":"ok";
+  return "ok";
+ }
+ if(c==="gens") return "off";
+ return "ok";
+}
+function hotSet(){
+ const o=S.outage; const s=new Set(); if(o==null) return s;
+ if(o===1) s.add("ups"),s.add("batt"); if(o===2) s.add("gens"),s.add("ats"),s.add("ups"); if(o===3) s.add("gens"),s.add("fuel"); if(o===4) s.add("ats");
+ return s;
+}
+
+/* ============================================================
+   INPUT: pan / zoom / pick
+   ============================================================ */
+const ptrs=new Map(); let dragMoved=0, pinch0=null;
+stage.addEventListener("pointerdown",e=>{if(e.target.closest(".ctrls,.dash,.toast,.cards,.crumb,.lb,.sheet")) return; stage.setPointerCapture(e.pointerId); ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY}); dragMoved=0; if(ptrs.size===2){const [a,b]=[...ptrs.values()]; pinch0={d:Math.hypot(a.x-b.x,a.y-b.y),s:cam.size};}});
+stage.addEventListener("pointermove",e=>{
+ if(!ptrs.has(e.pointerId)) return; const p=ptrs.get(e.pointerId); const dx=e.clientX-p.x, dy=e.clientY-p.y; ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+ if(ptrs.size===2&&pinch0){const [a,b]=[...ptrs.values()]; const d=Math.hypot(a.x-b.x,a.y-b.y); cam.size=clampSize(pinch0.s*pinch0.d/Math.max(10,d)); goal=null; return;}
+ dragMoved+=Math.abs(dx)+Math.abs(dy); if(dragMoved<4) return; goal=null;
+ const r=stage.getBoundingClientRect(); const s=cam.size/r.height;
+ const right=V(-Math.sin(cam.az),0,Math.cos(cam.az)); const fwd=V(-Math.cos(cam.az),0,-Math.sin(cam.az));
+ cam.target.addScaledVector(right,dx*s); cam.target.addScaledVector(fwd,dy*s/Math.sin(EL));
+});
+stage.addEventListener("pointerup",e=>{
+ const was=ptrs.has(e.pointerId); ptrs.delete(e.pointerId); if(ptrs.size<2) pinch0=null;
+ if(was&&dragMoved<4&&!e.target.closest(".ctrls,.dash,.toast,.cards,.crumb,.lb,.sheet")) pick(e);
+});
+stage.addEventListener("pointercancel",e=>{ptrs.delete(e.pointerId);pinch0=null;});
+stage.addEventListener("wheel",e=>{if(e.target.closest(".sheet,.toast,.cards,.dash")) return; e.preventDefault(); goal=null; cam.size=clampSize(cam.size*Math.exp(e.deltaY*0.0012));},{passive:false});
+function clampSize(s){return Math.max(S.level===4?1.2:6,Math.min(520,s));}
+function pickId(e){
+ const r=stage.getBoundingClientRect(); const m=new THREE.Vector2(((e.clientX-r.left)/r.width)*2-1,-((e.clientY-r.top)/r.height)*2+1);
+ raycaster.setFromCamera(m,camera);
+ const cands=OBJ.filter(o=>o.obj.visible&&o.op>0.5&&o.obj.userData.comp&&o.obj.isMesh).map(o=>o.obj);
+ const hits=raycaster.intersectObjects(cands,false);
+ for(const h of hits){let id=h.object.userData.comp; const rec=h.object.userData.rec; if(rec&&rec.alias&&S.vdc) id="dcstore"; if(C[id]&&compVisible(id)) return id;}
+ return null;
+}
+function pick(e){select(pickId(e),false);}
+let lastHov=0;
+stage.addEventListener("pointermove",e=>{ if(ptrs.size||e.pointerType==="touch"||e.target.closest(".lb,.ctrls,.dash,.toast,.cards,.crumb,.sheet")) return; const now=performance.now(); if(now-lastHov<70) return; lastHov=now;
+ const id=pickId(e); if(id!==S.hover){S.hover=id; stage.style.cursor=id?"pointer":"";} });
+stage.addEventListener("pointerleave",()=>{S.hover=null; stage.style.cursor="";});
+
+/* ============================================================
+   UI
+   ============================================================ */
+function i18nStatic(){document.querySelectorAll("[data-i]").forEach(el=>{el.textContent=T(UI[el.dataset.i]);}); $("hint").textContent=T(UI.hint); document.documentElement.lang=S.lang==="zh"?"zh-Hant":"en";}
+function renderLevels(){
+ const el=$("levels"); el.innerHTML="";
+ LEVELS.forEach(L=>{
+  const b=document.createElement("button"); b.className="lv"; b.setAttribute("aria-pressed",S.level===L.id);
+  b.innerHTML=`<span class="code">${L.code}</span><span><b>${esc(T(L.n))}</b><small>${esc(T(L.s))}</small></span>`;
+  b.onclick=()=>setLevel(L.id); el.appendChild(b);
+  if(L.id===3){const rr=document.createElement("div"); rr.className="rooms"; ROOMS.forEach(R=>{const x=document.createElement("button"); x.textContent=T(R.n); x.setAttribute("aria-pressed",S.level===3&&S.room===R.id); x.onclick=()=>{S.room=R.id; setLevel(3);}; rr.appendChild(x);}); el.appendChild(rr);}
+ });
+}
+function renderLayers(){
+ const el=$("layers"); el.innerHTML="";
+ LAYERS.forEach(Lr=>{
+  const lab=document.createElement("label"); lab.className="ly";
+  lab.innerHTML=`<input type="checkbox" id="ly-${Lr.id}" ${S.layers[Lr.id]?"checked":""}><span>${esc(T(Lr.n))}</span><span class="en2">${esc(S.lang==="zh"?Lr.n.en:"")}</span>`;
+  lab.querySelector("input").onchange=e=>{S.layers[Lr.id]=e.target.checked; renderAll(false);};
+  const wrap=document.createElement("div"); wrap.className="lyw"; wrap.appendChild(lab);
+  const keys=document.createElement("div"); keys.className="keys"; keys.innerHTML=Lr.key.map(k=>`<span>${swatch(k)}${esc(T(k[2]))}</span>`).join("");
+  if(!S.layers[Lr.id]) keys.classList.add("off"); wrap.appendChild(keys); el.appendChild(wrap);
+ });
+}
+function segHTML(key,opts){return `<div class="seg" role="group">${opts.map(o=>`<button data-k="${key}" data-v="${o[0]}" aria-pressed="${String(S[key])===String(o[0])}">${esc(o[1])}</button>`).join("")}</div>`;}
+function renderScen(){
+ const el=$("scen");
+ el.innerHTML=`<button class="outbtn" id="outBtn" aria-pressed="${S.outage!=null}"><span>${esc(S.outage!=null?T(UI.outageStop):T(UI.outage))}</span><span aria-hidden="true">→</span></button>
+ <div class="sc"><div class="t"><span>${esc(T(UI.red))}</span><button data-x="red">${esc(T(UI.explain))}</button></div>${segHTML("red",[["N+1","N+1"],["2N","2N"]])}</div>
+ <div class="sc"><div class="t"><span>${esc(T(UI.cool))}</span><button data-x="cool">${esc(T(UI.explain))}</button></div>${segHTML("liquid",[["false",T(UI.air)],["true",T(UI.liquid)]])}</div>
+ <div class="sc"><div class="t"><span>${esc(T(UI.dist))}</span><button data-x="dist">${esc(T(UI.explain))}</button></div>${segHTML("vdc",[["false","415 V AC"],["true","800 VDC"]])}<button class="linkbtn" data-arch>${esc(T(UI.archBtn))}</button></div>
+ <div class="sc"><div class="t"><span>${esc(T(UI.rej))}</span><button data-x="rej">${esc(T(UI.explain))}</button></div>${segHTML("evap",[["true",T(UI.evap)],["false",T(UI.dry)]])}</div>
+ <div class="sc"><div class="t"><span>${esc(T(UI.phaseT))}</span><button data-x="phase">${esc(T(UI.explain))}</button></div>${segHTML("phase",[["1",T(UI.ph1)],["2",T(UI.ph2)]])}</div>`;
+ el.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{const k=b.dataset.k; let v=b.dataset.v; if(v==="true")v=true; else if(v==="false")v=false; if(k==="phase") v=+v; S[k]=v;
+   if(k==="phase"){syncPhase(); if(S.level>1){S.level=0; renderLevels(); flyLevel();} renderAll(false); showScn("phase"); return;}
+   renderAll(false); showScn(k==="liquid"?"cool":k==="vdc"?"dist":k==="evap"?"rej":"red");});
+ el.querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>showScn(b.dataset.x));
+ el.querySelectorAll("[data-arch]").forEach(b=>b.onclick=()=>openArch(true));
+ $("outBtn").onclick=()=>{ if(S.outage!=null) stopOutage(); else startOutage(); };
+}
+function renderCrumb(){
+ const el=$("crumb"); const parts=[{t:T(LEVELS[0].n),f:()=>setLevel(0)}];
+ if(S.level>=1) parts.push({t:T(LEVELS[1].n),f:()=>setLevel(1)});
+ if(S.level>=2) parts.push({t:T(LEVELS[2].n),f:()=>setLevel(2)});
+ if(S.level>=3&&S.level!==4) parts.push({t:T(ROOMS.find(r=>r.id===S.room).n),f:()=>setLevel(3)});
+ if(S.level===4){parts.push({t:T(ROOMS[1].n),f:()=>{S.room="hall";setLevel(3);}}); parts.push({t:T(LEVELS[4].n),f:()=>setLevel(4)});}
+ if(S.sel) parts.push({t:T(C[S.sel].n),f:()=>select(S.sel,true)});
+ el.innerHTML=""; parts.forEach((p,i)=>{if(i){const s=document.createElement("span");s.className="sep";s.textContent="›";el.appendChild(s);} const b=document.createElement("button"); b.textContent=p.t; b.onclick=p.f; el.appendChild(b);});
+}
+function renderDash(){
+ const el=$("dash"); el.hidden=S.level===4;
+ if(!S.dashOpen){el.innerHTML=`<div class="hdr"><b style="font-size:12px">${esc(T(UI.dashT))}</b><button id="dTog">${esc(T(UI.show))}</button></div>`; $("dTog").onclick=()=>{S.dashOpen=true;renderDash();}; return;}
+ const racks=window.RACK_COUNT*(S.phase===2?2:1); const kw=S.liquid?132:7.5; const it=racks*kw/1000; const fac=it*S.pue;
+ el.innerHTML=`<div class="hdr"><b style="font-size:12px">${esc(T(UI.dashT))}</b><button id="dTog">${esc(T(UI.hide))}</button></div>
+ <div class="row big"><span>${esc(T(UI.itload))}</span><b>${it.toFixed(it<10?1:0)} MW</b></div>
+ <div class="row"><span>${esc(T(UI.racks))} × ${esc(T(UI.density))}</span><b>${racks} × ${kw} kW</b></div>
+ <div class="row"><span>${esc(T(UI.pue))}</span><b id="pueV">${S.pue.toFixed(2)}</b></div>
+ <input type="range" id="pueR" min="1.10" max="1.60" step="0.01" value="${S.pue}" aria-label="${esc(T(UI.pue))}">
+ <div class="row big"><span>${esc(T(UI.facility))}</span><b>${fac.toFixed(fac<10?1:0)} MW</b></div>
+ <div class="row"><span>${esc(T(UI.red))}</span><b>${S.red}</b></div>
+ <div class="row"><span>${esc(T(UI.water))}</span><b style="font-family:var(--f-body);font-size:12px">${esc(T(S.evap?UI.waterHi:UI.waterLo))}</b></div>
+ <div class="note">${esc(T(UI.dashNoteL))}</div>`;
+ $("dTog").onclick=()=>{S.dashOpen=false;renderDash();};
+ $("pueR").oninput=e=>{S.pue=parseFloat(e.target.value); renderDash(); const r=$("pueR"); if(r) r.focus();};
+}
+function srcList(keys){return `<ul class="srcs">${keys.map(k=>`<li><a href="${SRC[k].u}" target="_blank" rel="noopener">${esc(SRC[k].t)}</a></li>`).join("")}</ul>`;}
+function renderInfo(){
+ const el=$("info");
+ if(S.scnCard){const s=SCN[S.scnCard]; el.innerHTML=`<div class="card"><div class="nm"><h2>${esc(T(s.t))}</h2><div class="alt">${esc(T2(s.t))}</div></div><p>${esc(T(s.p||{zh:"",en:""}))}</p>${S.scnCard==="dist"?`<button class="linkbtn" data-arch>${esc(T(UI.archBtn))}</button>`:""}<div><div class="sh">${esc(T(UI.sources))}</div>${srcList(s.src)}</div></div>`; const ab=el.querySelector("[data-arch]"); if(ab) ab.onclick=()=>openArch(true); return;}
+ if(!S.sel){el.innerHTML=`<div class="empty"><h2>${esc(T(UI.emptyT))}</h2><ol><li>${esc(T(UI.empty1))}</li><li>${esc(T(UI.empty2))}</li><li>${esc(T(UI.empty3))}</li><li>${esc(T(UI.empty4))}</li><li>${esc(T(UI.empty5))}</li></ol></div>`; return;}
+ const id=S.sel, c=C[id];
+ const ups=REL.filter(r=>r[1]===id&&(!r[2]||r[2](S))&&compVisible(r[0])).map(r=>r[0]);
+ const downs=REL.filter(r=>r[0]===id&&(!r[2]||r[2](S))&&compVisible(r[1])).map(r=>r[1]);
+ const chip=a=>a.length?a.map(x=>`<button data-go="${x}">${esc(T(C[x].n))}</button>`).join(""):`<span class="none">${T(UI.noneRel)}</span>`;
+ const sysC={power:"--power",heat:"--heat",water:"--water",net:"--net",fire:"--fire",struct:"--struct",space:"--ink-3"}[c.s];
+ const desc=(S.vdc&&c.d800)?c.d800:c.d;
+ el.innerHTML=`<div class="card">
+  <div class="nm"><h2>${esc(T(c.n))}</h2><div class="alt">${esc(T2(c.n))}</div></div>
+  <div class="tags"><span class="tag">${esc(T(UI.zoneTag))}：${esc(T(ZONE[c.z]))}</span><span class="tag"><i style="border-top-color:var(${sysC})"></i>${esc(T(SYS[c.s]))}</span></div>
+  <p>${esc(T(desc))}</p>
+  <div><div class="sh">${esc(T(UI.upstream))}</div><div class="chips">${chip(ups)}</div></div>
+  <div><div class="sh">${esc(T(UI.downstream))}</div><div class="chips">${chip(downs)}</div></div>
+  <div class="pmbox"><div class="sh">${esc(T(UI.pmq))}</div><ul class="pmq">${T(c.pm).map(q=>`<li>${esc(q)}</li>`).join("")}</ul></div>
+  ${["rect","busway","pshelf","bbu","dcstore"].includes(id)?`<button class="linkbtn" data-arch>${esc(T(UI.archBtn))}</button>`:""}
+  <div><div class="sh">${esc(T(UI.sources))}</div>${srcList(c.src)}</div>
+ </div>`;
+ el.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>select(b.dataset.go,true));
+ const ab=el.querySelector("[data-arch]"); if(ab) ab.onclick=()=>openArch(true);
+}
+function showScn(k){S.scnCard=k; S.sel=null; renderInfo(); renderCrumb();}
+
+/* level of a component (for "go to") */
+function levelOf(id){const c=C[id]; if(c.lv.includes(4)) return {level:4}; if(c.zone) return {level:2}; if(c.lv.includes(0)) return {level:S.level<=1?S.level:0}; return {level:3,room:c.room};}
+function select(id,fly){
+ S.scnCard=null; S.sel=id;
+ if(id&&fly){
+  const c=C[id]; const here=c.lv.includes(S.level)&&(S.level!==3||c.room===S.room);
+  if(!here){const L=levelOf(id); S.level=L.level; if(L.room) S.room=L.room; renderLevels(); flyLevel(); updateExplodeBtn();}
+  else if(S.level!==4){const a=ANCHOR[id]; if(a) flyTo(V(a.x,0,a.z),cam.size);}
+ }
+ applyPull(id);
+ renderInfo(); renderCrumb();
+}
+function setLevel(l){
+ S.level=l; if(S.sel&&!labelShown(S.sel)) S.sel=null;
+ renderLevels(); renderCrumb(); renderInfo(); renderDash(); writeHash(); flyLevel();
+ updateExplodeBtn();
+}
+function renderAll(fly){renderLevels();renderLayers();renderScen();renderCrumb();renderDash();renderInfo();renderArch(); writeHash(); if(fly) flyLevel();}
+function hashName(){return S.level===3?("l3-"+S.room):("l"+S.level);}
+function writeHash(){const h=hashName(); if(location.hash.slice(1)!==h){try{history.replaceState(null,"","#"+h);}catch(e){}}}
+function readHash(){const m=/^l([0-4])(?:-(elec|hall|cup|support))?$/.exec(location.hash.slice(1)); if(m){S.level=+m[1]; if(m[2]) S.room=m[2]; return true;} return false;}
+window.addEventListener("hashchange",()=>{if(readHash()){renderAll(true); updateExplodeBtn();}});
+
+/* explode toggle (L1 roof / L4 rack) */
+const ctr=document.querySelector(".ctrls"); const exB=document.createElement("button"); exB.className="explode"; ctr.insertBefore(exB,ctr.firstChild);
+/* At L4, picking a tray-type part closes the rack and slides one representative drawer out of the front. */
+function applyPull(id){
+ const k=S.level===4&&id&&PULLIDX[id]!=null?id:null;
+ if(k){S.pull=k; S.explode=false;} else S.pull=null;
+ if(RACKPARTS.length) layoutRack(S.explode); try{updateExplodeBtn();}catch(e){}
+}
+function updateExplodeBtn(){exB.hidden=S.level!==4; exB.textContent=T(S.explode?UI.explodeOff:UI.explodeOn);}
+exB.onclick=()=>{S.pull=null; S.explode=!S.explode; layoutRack(S.explode); updateExplodeBtn();};
+
+/* outage storyboard */
+let outTimer=null;
+function startOutage(){S.outage=0; S.layers.power=true; if(S.level!==3||S.room!=="elec"){S.level=3;S.room="elec";} renderAll(true); renderToast();}
+function stopOutage(){S.outage=null; clearInterval(outTimer); outTimer=null; renderAll(false); renderToast();}
+function renderToast(){
+ const el=$("toast"), oc=$("ocard"); $("cards").classList.toggle("over",S.tour!=null&&S.arch);
+ // tour card
+ if(S.tour!=null){const st=TOUR[S.tour]; el.hidden=false;
+  el.innerHTML=`<div class="kr"><div class="kick">${esc(T(UI.stepK))} · ${S.tour+1} / ${TOUR.length}</div><button class="xbtn" id="tClose" aria-label="${esc(T(UI.close))}">×</button></div><div class="th"><b>${esc(T(st.t))}</b></div><p>${esc(T(st.p))}</p>
+  <div class="acts"><button class="rbtn ghost" id="tPrev" aria-label="${esc(T(UI.prev))}">←</button><button class="rbtn" id="tNext" aria-label="${esc(T(UI.next))}">${S.tour===TOUR.length-1?"✓":"→"}</button></div>`;
+  $("tPrev").onclick=()=>tourGo(Math.max(0,S.tour-1)); $("tClose").onclick=endTour; $("tNext").onclick=()=>S.tour===TOUR.length-1?endTour():tourGo(S.tour+1);
+ } else {el.hidden=true; el.innerHTML="";}
+ // outage card (same card whether started from the panel or from the tour)
+ if(S.outage==null){oc.hidden=true; oc.innerHTML=""; return;}
+ const o=OUTAGE[S.outage]; oc.hidden=false;
+ const srcLine=`<div class="src">${esc(T({zh:"來源：",en:"Source: "}))}<a href="${SRC.uptime25.u}" target="_blank" rel="noopener">${esc(SRC.uptime25.t)}</a></div>`;
+ oc.innerHTML=`<div class="kr"><div class="kick">${esc(T(UI.outK))} · ${S.outage+1} / ${OUTAGE.length}</div><button class="xbtn" id="oX" aria-label="${esc(T(UI.outageStop))}">×</button></div><div class="th"><b>${esc(T(o.t))}</b></div><p>${esc(T(o.p))}</p>${srcLine}
+  <div class="acts"><button class="tbtn" id="oPlay">${esc(T(outTimer?UI.pause:UI.play))}</button><button class="rbtn ghost" id="oPrev" aria-label="${esc(T(UI.prev))}">←</button><button class="rbtn" id="oNext" aria-label="${esc(T(UI.next))}">→</button></div>`;
+ $("oX").onclick=stopOutage;
+ $("oPrev").onclick=()=>{S.outage=(S.outage+OUTAGE.length-1)%OUTAGE.length; renderToast();};
+ $("oNext").onclick=()=>{S.outage=(S.outage+1)%OUTAGE.length; renderToast();};
+ $("oPlay").onclick=()=>{ if(outTimer){clearInterval(outTimer);outTimer=null;} else outTimer=setInterval(()=>{S.outage=(S.outage+1)%OUTAGE.length; renderToast();},3600); renderToast();};
+}
+
+/* power-architecture sheet (redrawn from TI and Vertiv descriptions) */
+SRC.ti={t:"Texas Instruments — Data centers evolve to meet AI's massive power needs (B. McDonald, 2025-11)",u:"https://www.ti.com.cn/lit/pdf/SSZTDB4"};
+SRC.vtv800={t:"Vertiv — 800 VDC conversion boundary: three architecture models (2026-10-21)",u:"https://www.vertiv.com/en-us/insights/articles/blog-posts/800-vdc-conversion-boundary-three-architecture-models-for-mw-scale-ai-data-centers/"};
+const ARCH={
+ gens:[
+  {k:{zh:"第二代 · 今日主流",en:"Gen 2 · today"},t:{zh:"機櫃內 AC/DC",en:"AC/DC inside the rack"},p:{zh:"13 kV 經變壓器降到 480 VAC，進機櫃的電源層轉成 50 VDC 匯流排，托盤上再降到 12 V。TI 指出實際約 100 kW，超過約 200 kW 就因配電損耗而不切實際。",en:"13 kV is stepped down to 480 VAC, power shelves in the rack make a 50 VDC busbar, and each tray converts to 12 V. TI puts realistic loads near 100 kW; above roughly 200 kW, distribution losses make it impractical."}},
+  {k:{zh:"第三代 · 電源側櫃",en:"Gen 3 · sidecar"},t:{zh:"Power sidecar → 800 VDC",en:"Power sidecar → 800 VDC"},p:{zh:"電源層移到旁邊的電源櫃，輸出 800 VDC 或 ±400 VDC。在 1 MW 時，匯流排電流從約 20 kA 降到 1.25 kA，櫃內空間讓給運算。Vertiv 的電源櫃可供 600 kW 以上。",en:"Power shelves move into a rack beside the IT rack and output 800 VDC or ±400 VDC. At 1 MW, busbar current drops from about 20 kA to 1.25 kA, freeing rack space for compute. Vertiv's power racks supply over 600 kW."}},
+  {k:{zh:"第四代 · 提案",en:"Gen 4 · proposal"},t:{zh:"設施端固態變壓器 SST",en:"Facility solid-state transformer"},p:{zh:"SST 一次取代中壓變壓器與整流，完成隔離與 AC→800 VDC，轉換移到灰區的多 MW 機組。轉換越集中，故障影響範圍也越大。",en:"An SST replaces both the MV transformer and the rectifiers in one stage — isolation plus AC→800 VDC — moving conversion into multi-MW units in the grey space. More centralised conversion also concentrates fault risk."}}
+ ],
+ legend:[
+  ["LFT",{zh:"傳統鐵芯工頻變壓器（line-frequency transformer）。",en:"Conventional iron-core, line-frequency transformer."}],
+  ["SST",{zh:"固態變壓器：以電力電子做隔離與交直流轉換。",en:"Solid-state transformer: isolation and AC/DC conversion done with power electronics."}],
+  ["Power shelf",{zh:"電源層：把交流轉成機櫃用的直流。",en:"Converts AC to the rack's DC bus."}],
+  ["Sidecar",{zh:"電源側櫃：放在 IT 機櫃旁、專門供電的機櫃。",en:"A dedicated power rack beside the IT rack."}],
+  ["BBU",{zh:"電池備援單元：在市電恢復或發電機啟動前維持供電。",en:"Battery backup unit: holds the bus until utility returns or generators start."}],
+  ["CBU",{zh:"電容備援單元：抑制停電瞬間的電壓與電流暫態。",en:"Capacitor backup unit: suppresses voltage and current transients."}],
+  ["IBC",{zh:"中間匯流排轉換器：在托盤上把高壓匯流排降到 12／48／6 V。",en:"Intermediate bus converter: steps the bus down to 12, 48 or 6 V on each tray."}]
+ ]
+};
+function archSVG(){
+ const B="var(--line-art)", G="#8f8f8a", I="var(--ink)", O="var(--accent)";
+ const tower=(x,y)=>`<path d="M${x-13} ${y+66}L${x} ${y}L${x+13} ${y+66}M${x-9} ${y+46}H${x+9}M${x-5} ${y+26}H${x+5}M${x-17} ${y+12}H${x+17}M${x-13} ${y+66}L${x+5} ${y+26}M${x+13} ${y+66}L${x-5} ${y+26}" stroke="${B}" fill="none" stroke-width="1.4"/>`;
+ const cab=(x,y,w,h,lab,fins)=>{let f=""; for(let k=0;k<(fins||0);k++) f+=`<path d="M${x+w-14-k*7} ${y+16}V${y+h-12}" stroke="${B}" stroke-width="1"/>`;
+  return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="#fff" stroke="${B}" stroke-width="1.4"/><path d="M${x} ${y+12}H${x+w}" stroke="${B}"/>${f}<text x="${x+10}" y="${y+h/2+4}" font-size="13" font-weight="600" fill="${I}">${lab}</text>`;};
+ const rack=(x,y,w,h,shelves)=>{let r=`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2" fill="#fff" stroke="${B}" stroke-width="1.4"/><path d="M${x+6} ${y+4}V${y+h-4}M${x+w-6} ${y+4}V${y+h-4}" stroke="${B}" stroke-width="1"/>`;
+  const n=shelves.length, sh=(h-16)/n; shelves.forEach((t,k)=>{const yy=y+8+k*sh; r+=`<rect x="${x+9}" y="${yy}" width="${w-18}" height="${sh-3}" fill="${t==="p"?"#fdebe3":"#fff"}" stroke="${t==="p"?O:B}" stroke-width="1"/>`;}); return r;};
+ const arr=(x1,y1,x2,y2,lab,ly)=>`<path d="M${x1} ${y1}L${x2} ${y2}" stroke="${G}" stroke-width="1.3" marker-end="url(#ah)"/>${lab?`<text x="${(x1+x2)/2}" y="${(ly??Math.min(y1,y2)-8)}" font-size="12" text-anchor="middle" fill="${I}" font-family="var(--f-mono)">${lab}</text>`:""}`;
+ const elbow=(pts,lab,lx,ly)=>`<polyline points="${pts}" fill="none" stroke="${G}" stroke-width="1.3" marker-end="url(#ah)"/>${lab?`<text x="${lx}" y="${ly}" font-size="12" fill="${I}" font-family="var(--f-mono)">${lab}</text>`:""}`;
+ const tag=(x,y,t)=>`<text x="${x}" y="${y}" font-size="11" fill="${B}" font-family="var(--f-mono)" letter-spacing=".06em">${t}</text>`;
+ const gen=k=>T(ARCH.gens[k].k).toUpperCase();
+ let s=`<svg viewBox="0 0 900 430" role="img" aria-label="${esc(T(UI.archTitle))}"><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${G}"/></marker></defs>`;
+ s+=tower(48,170)+tower(84,182)+`<path d="M30 236H104" stroke="${B}"/>`+`<text x="66" y="262" font-size="12" text-anchor="middle" fill="${I}">Grid</text><text x="66" y="278" font-size="11.5" text-anchor="middle" fill="${G}" font-family="var(--f-mono)">13 kV AC</text>`;
+ s+=elbow("110,210 140,210 140,92 186,92","",0,0)+elbow("110,220 140,220 140,352 186,352","",0,0);
+ s+=cab(190,48,112,88,"LFT",4)+tag(190,40,"MV TRANSFORMER");
+ s+=cab(190,306,112,92,"SST",3)+tag(190,298,"SOLID-STATE");
+ // Gen 2
+ s+=arr(306,80,420,80,"480 VAC");
+ s+=rack(424,26,54,118,["p","p","c","c","c","s","c","c","c"])+tag(492,40,gen(0))+`<text x="492" y="60" font-size="13" fill="${I}" font-weight="600">${esc(T(ARCH.gens[0].t))}</text><text x="492" y="78" font-size="11.5" fill="${G}" font-family="var(--f-mono)">50 VDC busbar · ~100 kW</text>`;
+ // Gen 3
+ s+=elbow("306,118 360,118 360,222 420,222","480 VAC",364,206);
+ s+=rack(424,166,54,118,["p","p","p","p","p","p"])+`<text x="451" y="160" font-size="11.5" text-anchor="middle" fill="${I}">Sidecar</text>`;
+ s+=arr(482,222,598,222,"800 / ±400 VDC");
+ s+=rack(602,166,54,118,["c","c","c","s","c","c","c"])+tag(672,180,gen(1))+`<text x="672" y="200" font-size="13" fill="${I}" font-weight="600">${esc(T(ARCH.gens[1].t))}</text><text x="672" y="218" font-size="11.5" fill="${G}" font-family="var(--f-mono)">1 MW: ~20 kA → 1.25 kA</text>`;
+ // Gen 4
+ s+=arr(306,352,420,352,"800 VDC");
+ s+=rack(424,300,66,124,["c","c","c","c","s","c","c","c","c"])+tag(504,316,gen(2))+`<text x="504" y="336" font-size="13" fill="${I}" font-weight="600">${esc(T(ARCH.gens[2].t))}</text><text x="504" y="354" font-size="11.5" fill="${G}" font-family="var(--f-mono)">MW-class rack</text>`;
+ // key
+ s+=`<rect x="704" y="372" width="14" height="9" fill="#fdebe3" stroke="${O}"/><text x="724" y="381" font-size="11.5" fill="${G}">Power shelf</text><rect x="704" y="392" width="14" height="9" fill="#fff" stroke="${B}"/><text x="724" y="401" font-size="11.5" fill="${G}">Compute / switch tray</text>`;
+ return s+`</svg>`;
+}
+function renderArch(){
+ const el=$("arch"); if(!S.arch){el.hidden=true; el.innerHTML=""; return;}
+ el.hidden=false;
+ el.innerHTML=`<div class="sh-top"><div><span class="pill">${esc(T(UI.archKick))}</span><h2>${esc(T(UI.archTitle))}</h2><p class="lede">${esc(T(UI.archLede))}</p></div><button class="rbtn ghost" id="archX" aria-label="${esc(T(UI.close))}">×</button></div>
+ <div class="dia">${archSVG()}</div>
+ <div class="gens3">${ARCH.gens.map(g=>`<div><span class="k">${esc(T(g.k))}</span><b>${esc(T(g.t))}</b><p>${esc(T(g.p))}</p></div>`).join("")}</div>
+ <div class="legend">${ARCH.legend.map(l=>`<div><b>${l[0]}</b> · ${esc(T(l[1]))}</div>`).join("")}</div>
+ <div class="case"><b>${esc(T(UI.caseK))}</b><p>${esc(T(UI.caseP))}</p></div>
+ <div class="srcs"><div class="sh" style="font:500 11px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px">${esc(T(UI.sources))}</div>${srcList(["ti","vtv800","nv800","fox800"])}<p style="margin:6px 0 0;font-size:11.5px;color:var(--ink-3)">${esc(T({zh:"示意圖依上列文件的文字描述重繪並簡化；SST 架構為 TI 所列提案。",en:"Redrawn and simplified from the text of the documents above; the SST design is listed by TI as a proposal."}))}</p></div>`;
+ $("archX").onclick=()=>openArch(false);
+}
+function openArch(on){S.arch=on; renderArch();}
+
+/* guided tour */
+function tourGo(i){
+ S.tour=i; const st=TOUR[i].set;
+ if(st.layers){Object.keys(S.layers).forEach(k=>S.layers[k]=st.layers.includes(k));}
+ ["red","liquid","vdc","phase","room"].forEach(k=>{if(st[k]!==undefined) S[k]=st[k];});
+ S.outage=st.outage?0:null; if(outTimer){clearInterval(outTimer);outTimer=null;}
+ S.level=st.level; S.sel=TOUR[i].sel; S.scnCard=null; S.arch=!!st.arch;
+ if(S.level===4){S.pull=null; S.explode=true; layoutRack(true);}
+ syncPhase(); renderAll(true); updateExplodeBtn(); renderToast();
+}
+function syncPhase(){ANCHOR.expansion=V(170,S.phase===2?16:2,192);}
+function endTour(){S.tour=null; S.outage=null; S.arch=false; renderToast(); renderAll(false);}
+$("tourBtn").onclick=()=>tourGo(0);
+
+/* header controls */
+$("langSeg").querySelectorAll("button").forEach(b=>b.onclick=()=>{S.lang=b.dataset.v; $("langSeg").querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b)); i18nStatic(); refreshLabelText(); renderAll(false); renderToast(); updateExplodeBtn();});
+
+$("zIn").onclick=()=>{goal=null; flyTo(cam.target,clampSize(cam.size/1.45));};
+$("zOut").onclick=()=>{goal=null; flyTo(cam.target,clampSize(cam.size*1.45));};
+$("rotL").onclick=()=>flyTo(cam.target,cam.size,cam.az-Math.PI/2);
+$("rotR").onclick=()=>flyTo(cam.target,cam.size,cam.az+Math.PI/2);
+$("reset").onclick=()=>{const k=Math.round((cam.az-Math.PI/4)/(Math.PI*2)); const f=frameFor(); flyTo(V(f.t[0],f.t[1],f.t[2]),f.s*fitScale(),Math.PI/4+k*Math.PI*2);};
+window.addEventListener("keydown",e=>{if(e.target.matches("input"))return; if(e.key>="0"&&e.key<="4") setLevel(+e.key); if(e.key==="Escape"){ if(S.arch) openArch(false); else select(null);}});
+
+/* boot */
+const LINKEDIN_URL=""; // e.g. https://www.linkedin.com/in/<handle>
+if(LINKEDIN_URL){const li=$("liLink"); li.hidden=false; const a=li.querySelector("a"); a.href=LINKEDIN_URL; a.textContent=LINKEDIN_URL.replace(/^https?:\/\/(www\.)?/,"").replace(/\/$/,"");}
+build(); readHash();
+$("langSeg").querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x.dataset.v===S.lang));
+i18nStatic(); refreshLabelText(); renderAll(false); updateExplodeBtn();
+new ResizeObserver(()=>{resize();}).observe(stage); resize();
+{const f=frameFor(); cam.target.set(f.t[0],f.t[1],f.t[2]); cam.size=f.s*fitScale();}
+if(!webglOK){ $("info").innerHTML=`<div class="empty"><p>${esc(T({zh:"此瀏覽器無法啟用 WebGL，無法顯示 3D 模型。",en:"WebGL is unavailable in this browser, so the 3D model cannot be shown."}))}</p></div>`; }
+requestAnimationFrame(tick);
+</script>
+
+</body>
+</html>
