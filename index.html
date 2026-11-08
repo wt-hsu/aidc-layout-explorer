@@ -32,10 +32,11 @@ a{color:var(--ink);text-underline-offset:2px}
 .app{height:100%;display:grid;grid-template-rows:auto 1fr auto}
 /* header */
 header.bar{display:flex;align-items:flex-end;gap:14px 24px;flex-wrap:wrap;padding-block:16px 14px}
-.brand{display:grid;gap:6px;margin-right:auto;min-width:0;max-width:860px}
+.brand{display:grid;gap:6px;margin-right:auto;min-width:0;max-width:1000px}
 .pill{justify-self:start;font-size:12px;border:1px solid var(--line-2);border-radius:999px;padding:2px 11px;color:var(--ink)}
 .brand h1{margin:0;font-family:var(--f-display);font-weight:600;font-size:clamp(24px,2.4vw,32px);line-height:1.15;letter-spacing:-.015em;text-wrap:balance}
-.brand .sub{margin:0;font-size:14.5px;color:var(--ink-2);max-width:64ch}
+.brand .sub{margin:0;font-size:14.5px;color:var(--ink-2)}
+.brand .sub .s2{display:block}
 .sheet .case{border-left:2px solid var(--line-2);padding:2px 0 2px 12px}.sheet .case b{font-size:13px}.sheet .case p{margin:4px 0 0;font-size:13px;color:var(--ink-2)}
 .brand .by{margin:6px 0 0;font-size:12.5px;color:var(--ink-3);display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
 .brand .by .lk{color:var(--ink-3)}
@@ -223,7 +224,7 @@ main.work{display:grid;grid-template-columns:236px minmax(0,1fr) 330px;gap:18px;
 
 <div class="app">
   <header class="bar">
-    <div class="brand"><h1><span data-i="title"></span><span class="tl" data-i="tagline"></span></h1><p class="sub" data-i="subtitle"></p><p class="by"><a href="https://wantinghsu.com/lab/aidc-layout/">← Back to the study · wantinghsu.com</a></p></div>
+    <div class="brand"><h1><span data-i="title"></span><span class="tl" data-i="tagline"></span></h1><p class="sub"><span data-i="subtitle"></span><span class="s2" data-i="subtitle2"></span></p><p class="by"><a href="https://wantinghsu.com/lab/aidc-layout/">← Back to the study · wantinghsu.com</a></p></div>
     <div class="hctl">
       <div class="seg" role="group" aria-label="Language" id="langSeg"><button data-v="zh" aria-pressed="true">中文</button><button data-v="en" aria-pressed="false">EN</button></div>
       <button class="cta" id="tourBtn"><span data-i="tour"></span><span aria-hidden="true">→</span></button>
@@ -296,7 +297,8 @@ const UI={
   eyebrow:{zh:"AIDC 參考架構",en:"AIDC reference architecture"},
   title:{zh:"AIDC 配置圖解",en:"AIDC Layout Explorer"},
   tagline:{zh:"從併網點到機櫃",en:"From Grid to Rack"},
-  subtitle:{zh:"以一座 80 MW 示意園區，逐層呈現電力、冷卻、用水與網路從併網點到機櫃的路徑。各元件附評估重點與公開資料來源。",en:"An illustrative 80 MW campus, explored level by level: how power, cooling, water and network run from the point of interconnection to the rack. Each component lists due-diligence questions and public sources."},
+  subtitle:{zh:"以一座 80 MW 示意園區，逐層呈現電力、冷卻、用水與網路從併網點到機櫃的路徑。",en:"An illustrative 80 MW campus, explored level by level: how power, cooling, water and network run from the point of interconnection to the rack."},
+  subtitle2:{zh:"各元件附評估重點與公開資料來源。",en:"Each component lists due-diligence questions and public sources."},
   tour:{zh:"3 分鐘導覽",en:"3-minute walkthrough"},
   archBtn:{zh:"電力架構演進 →",en:"Power architecture →"},
   archKick:{zh:"電力架構",en:"Power architecture"},
