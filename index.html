@@ -1374,7 +1374,7 @@ function setLevel(l){
 }
 function renderAll(fly){renderLevels();renderLayers();renderScen();renderCrumb();renderDash();renderInfo();renderArch(); writeHash(); if(fly) flyLevel();}
 function hashName(){return S.level===3?("l3-"+S.room):("l"+S.level);}
-function writeHash(){const h=hashName(); if(location.hash.slice(1)!==h){try{history.replaceState(null,"","#"+h);}catch(e){}}}
+function writeHash(){const h=hashName(); const want=h==="l0"?"":h; /* campus view is the default: keep the address clean */ if(location.hash.slice(1)!==want){try{history.replaceState(null,"",want?"#"+want:location.pathname+location.search);}catch(e){}}}
 function readHash(){const m=/^l([0-4])(?:-(elec|hall|cup|support))?$/.exec(location.hash.slice(1)); if(m){S.level=+m[1]; if(m[2]) S.room=m[2]; return true;} return false;}
 window.addEventListener("hashchange",()=>{if(readHash()){renderAll(true); updateExplodeBtn();}});
 
