@@ -54,7 +54,7 @@ main.work{display:grid;grid-template-columns:236px minmax(0,1fr) 330px;gap:18px;
 .ph .n{color:var(--ink-3);font-weight:500}
 .ph .q{margin-left:auto;font:400 11px var(--f-body);letter-spacing:0;text-transform:none;color:var(--ink-3)}
 .psec{padding-top:16px;border-top:1px solid var(--ink)}
-.psec:first-child{padding-top:0;border-top:0}
+.psec:first-of-type{padding-top:0;border-top:0}
 .levels{display:grid;gap:2px}
 .lv{display:grid;grid-template-columns:28px 1fr;gap:8px;align-items:center;text-align:left;border:0;background:transparent;border-radius:6px;padding:6px 6px}
 .lv .code{font:500 11.5px var(--f-mono);color:var(--ink-3)}
@@ -217,6 +217,23 @@ main.work{display:grid;grid-template-columns:236px minmax(0,1fr) 330px;gap:18px;
 .outbtn[aria-pressed="true"]{background:var(--btn);border-color:var(--btn);color:#fff}
 .toast,.dash,.lb>span,.sheet,.outbtn:not([aria-pressed="true"]),.seg{background:var(--card)}
 .brand h1 .tl{font-weight:400;color:var(--ink-2);margin-left:.45em}
+/* collapsible controls: whole column folds to a rail; each section folds on its header */
+.navbar{display:flex;justify-content:flex-end;margin-bottom:-14px}
+.navbtn{border:1px solid var(--line-2);background:var(--card);border-radius:4px;padding:3px 9px;font-size:12px;color:var(--ink-2)}
+.navbtn:hover,.rbx:hover{border-color:var(--ink);color:var(--ink)}
+.rail{display:none}
+.rbx{width:34px;height:34px;border:1px solid var(--line-2);background:var(--card);border-radius:4px;font:500 11px var(--f-mono);color:var(--ink-2);display:grid;place-items:center}
+#navO{font:400 17px var(--f-body);color:var(--ink)}
+main.work.navoff{grid-template-columns:36px minmax(0,1fr) 330px}
+main.work.navoff #ctl>.psec,main.work.navoff #ctl>.navbar{display:none}
+main.work.navoff #ctl .rail{display:grid;gap:8px;justify-items:center;align-content:start}
+.ph{cursor:pointer;user-select:none}
+.ph .chev{margin-left:4px;color:var(--ink-3);font-size:11px;transition:transform .2s}
+.psec.closed .chev{transform:rotate(-90deg)}
+.psec.closed>:not(.ph){display:none}
+.psec.closed .ph{margin-bottom:0}
+@media (max-width:1180px){main.work.navoff{grid-template-columns:36px minmax(0,1fr) 290px}}
+@media (max-width:960px){.navbar{display:none} main.work.navoff #ctl>.psec{display:block} main.work.navoff #ctl .rail{display:none}}
 </style>
 </head>
 <body>
@@ -233,9 +250,11 @@ main.work{display:grid;grid-template-columns:236px minmax(0,1fr) 330px;gap:18px;
 
   <main class="work">
     <aside class="panel" id="ctl" aria-label="Controls">
-      <section class="psec"><div class="ph"><span class="n">01</span><span data-i="hLevels"></span><span class="q" data-i="qLevels"></span></div><div class="levels" id="levels"></div></section>
-      <section class="psec"><div class="ph"><span class="n">02</span><span data-i="hLayers"></span><span class="q" data-i="qLayers"></span></div><div class="layers" id="layers"></div></section>
-      <section class="psec"><div class="ph"><span class="n">03</span><span data-i="hScen"></span><span class="q" data-i="qScen"></span></div><div class="scn" id="scen"></div></section>
+      <div class="navbar"><button class="navbtn" id="navT" aria-expanded="true"><span aria-hidden="true">‹</span> <span data-i="navHide"></span></button></div>
+      <div class="rail" id="rail"><button id="navO" class="rbx" aria-label="Expand controls">›</button><button class="rbx" data-sec="0">01</button><button class="rbx" data-sec="1">02</button><button class="rbx" data-sec="2">03</button></div>
+      <section class="psec"><div class="ph" role="button" tabindex="0" aria-expanded="true"><span class="n">01</span><span data-i="hLevels"></span><span class="q" data-i="qLevels"></span><span class="chev" aria-hidden="true">▾</span></div><div class="levels" id="levels"></div></section>
+      <section class="psec"><div class="ph" role="button" tabindex="0" aria-expanded="true"><span class="n">02</span><span data-i="hLayers"></span><span class="q" data-i="qLayers"></span><span class="chev" aria-hidden="true">▾</span></div><div class="layers" id="layers"></div></section>
+      <section class="psec"><div class="ph" role="button" tabindex="0" aria-expanded="true"><span class="n">03</span><span data-i="hScen"></span><span class="q" data-i="qScen"></span><span class="chev" aria-hidden="true">▾</span></div><div class="scn" id="scen"></div></section>
     </aside>
 
     <section class="stage" id="stage" aria-label="Isometric model">
@@ -307,7 +326,7 @@ const UI={
   close:{zh:"關閉",en:"Close"},
   stepK:{zh:"導覽",en:"Tour"},outK:{zh:"情境模擬",en:"Scenario"},
   ph1:{zh:"第一期",en:"Phase 1"},ph2:{zh:"含第二期",en:"+ Phase 2"},phaseT:{zh:"分期（園區尺度）",en:"Phasing (campus scale)"},
-  hLevels:{zh:"縮放層級",en:"Zoom levels"},qLevels:{zh:"看哪裡",en:"Where"},qLayers:{zh:"看哪個系統",en:"Which system"},qScen:{zh:"如果改變…",en:"What if"},hLayers:{zh:"系統圖層",en:"System layers"},hScen:{zh:"設計選項",en:"Design options"},
+  hLevels:{zh:"縮放層級",en:"Zoom levels"},navHide:{zh:"收合",en:"Collapse"},qLevels:{zh:"看哪裡",en:"Where"},qLayers:{zh:"看哪個系統",en:"Which system"},qScen:{zh:"如果改變…",en:"What if"},hLayers:{zh:"系統圖層",en:"System layers"},hScen:{zh:"設計選項",en:"Design options"},
   disclaimer:{zh:"數據取自公開資料，來源列於各元件。",en:"Figures come from public sources cited on each component."},
   credit:{zh:"© 2026 Wan-Ting Hsu",en:"© 2026 Wan-Ting Hsu"},
   hint:{zh:"拖曳平移 · 滾輪縮放 · 點選元件",en:"Drag to pan · scroll to zoom · click a component"},
@@ -1465,6 +1484,13 @@ $("rotR").onclick=()=>flyTo(cam.target,cam.size,cam.az+Math.PI/2);
 $("reset").onclick=()=>{const k=Math.round((cam.az-Math.PI/4)/(Math.PI*2)); const f=frameFor(); flyTo(V(f.t[0],f.t[1],f.t[2]),f.s*fitScale(),Math.PI/4+k*Math.PI*2);};
 window.addEventListener("keydown",e=>{if(e.target.matches("input"))return; if(e.key>="0"&&e.key<="4") setLevel(+e.key); if(e.key==="Escape"){ if(S.arch) openArch(false); else select(null);}});
 
+/* collapsible controls */
+{const work=document.querySelector("main.work"), secs=[...document.querySelectorAll("#ctl .psec")];
+ const setNav=open=>{work.classList.toggle("navoff",!open); $("navT").setAttribute("aria-expanded",open);};
+ $("navT").onclick=()=>setNav(false); $("navO").onclick=()=>setNav(true);
+ document.querySelectorAll("#rail [data-sec]").forEach(b=>{const k=+b.dataset.sec; b.title=T([UI.hLevels,UI.hLayers,UI.hScen][k]); b.onclick=()=>{setNav(true); secs[k].classList.remove("closed"); secs[k].querySelector(".ph").setAttribute("aria-expanded",true); secs[k].scrollIntoView({block:"start",behavior:"smooth"});};});
+ secs.forEach(sec=>{const h=sec.querySelector(".ph"); const tog=()=>{const c=sec.classList.toggle("closed"); h.setAttribute("aria-expanded",!c);};
+  h.onclick=tog; h.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault(); tog();}};});}
 /* boot */
 const LINKEDIN_URL=""; // e.g. https://www.linkedin.com/in/<handle>
 if(LINKEDIN_URL){const li=$("liLink"); li.hidden=false; const a=li.querySelector("a"); a.href=LINKEDIN_URL; a.textContent=LINKEDIN_URL.replace(/^https?:\/\/(www\.)?/,"").replace(/\/$/,"");}
